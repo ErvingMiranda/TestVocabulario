@@ -37,3 +37,28 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Build
+target/
+
+# OpenXava / local generated data
+data/
+.xava/
+
+# Logs
+*.log
+*.lck
+
+# IDE local files
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/httpRequests/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local configuration / credentials
+src/main/webapp/META-INF/context-local.xml
