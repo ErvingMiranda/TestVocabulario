@@ -25,10 +25,14 @@ public class ResultadoPrueba extends Identifiable {
 
     int respuestasIncorrectas;
 
+    int respuestasOmitidas;
+
+    int puntajeDirecto;
+
     BigDecimal porcentaje;
 
-    @Required
-    boolean aprobado;
+    @Stereotype("MEMO")
+    String interpretacion;
 
     LocalDateTime fechaCalculo = LocalDateTime.now();
 }

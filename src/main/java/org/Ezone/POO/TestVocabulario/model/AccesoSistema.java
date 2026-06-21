@@ -17,7 +17,7 @@ public class AccesoSistema extends Identifiable {
     String nombreUsuario;
 
     @Column(length=120, nullable=false) @Required
-    String contrasena;
+    String hashContrasena;
 
     @Enumerated(EnumType.STRING)
     EstadoAcceso estadoAcceso = EstadoAcceso.ACTIVO;

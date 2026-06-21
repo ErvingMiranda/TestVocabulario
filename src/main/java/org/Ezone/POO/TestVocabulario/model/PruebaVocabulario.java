@@ -34,8 +34,6 @@ public class PruebaVocabulario extends Identifiable {
 
     int tiempoLimiteMinutos;
 
-    int puntajeMinimoAprobacion;
-
     LocalDate fechaCreacion = LocalDate.now();
 
     public boolean activa() {
