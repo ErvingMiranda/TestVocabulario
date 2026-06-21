@@ -3,6 +3,7 @@ package org.Ezone.POO.TestVocabulario.model;
 import java.time.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 
 import org.Ezone.POO.TestVocabulario.enums.*;
 import org.openxava.annotations.*;
@@ -25,6 +26,8 @@ public class PruebaVocabulario extends Identifiable {
     String descripcion;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable=false)
+    @NotNull @Required
     EstadoPrueba estadoPrueba = EstadoPrueba.BORRADOR;
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
@@ -32,6 +35,7 @@ public class PruebaVocabulario extends Identifiable {
     @Required
     Psicologo psicologo;
 
+    @Min(1) @Required
     int tiempoLimiteMinutos;
 
     LocalDate fechaCreacion = LocalDate.now();

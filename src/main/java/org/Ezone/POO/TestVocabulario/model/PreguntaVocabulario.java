@@ -1,6 +1,7 @@
 package org.Ezone.POO.TestVocabulario.model;
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 
 import org.openxava.annotations.*;
 import org.openxava.model.*;
@@ -16,14 +17,14 @@ public class PreguntaVocabulario extends Identifiable {
     @Required
     PruebaVocabulario prueba;
 
-    @Required
+    @Min(1) @Required
     int numero;
 
     @Stereotype("MEMO")
     @Required
     String enunciado;
 
-    @Required
+    @Min(1) @Required
     int puntaje = 1;
 
     @Required
