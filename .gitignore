@@ -62,3 +62,6 @@ Thumbs.db
 
 # Local configuration / credentials
 src/main/webapp/META-INF/context-local.xml
+
+# Local database credentials
+src/main/webapp/META-INF/context.xml
