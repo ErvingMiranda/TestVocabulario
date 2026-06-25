@@ -43,11 +43,15 @@ public class VocabularioBApiServlet extends HttpServlet {
             }
             error(response, HttpServletResponse.SC_NOT_FOUND, "Endpoint no encontrado");
         }
+        catch (ApiException ex) {
+            error(response, ex.getStatus(), ex.getMessage());
+        }
         catch (ValidacionPruebaException ex) {
             error(response, HttpServletResponse.SC_CONFLICT, ex.getMessage());
         }
         catch (Exception ex) {
-            error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
+            logError(ex);
+            error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error interno del servidor");
         }
     }
 
@@ -74,15 +78,27 @@ public class VocabularioBApiServlet extends HttpServlet {
 
             error(response, HttpServletResponse.SC_NOT_FOUND, "Endpoint no encontrado");
         }
-        catch (IllegalArgumentException | AplicacionPruebaException | CalculoResultadoException |
-            ValidacionPruebaException ex) {
+        catch (ApiException ex) {
+            rollbackQuietly();
+            error(response, ex.getStatus(), ex.getMessage());
+        }
+        catch (IllegalArgumentException ex) {
 
             rollbackQuietly();
             error(response, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
         }
+        catch (DateTimeException ex) {
+            rollbackQuietly();
+            error(response, HttpServletResponse.SC_BAD_REQUEST, "Fecha invalida");
+        }
+        catch (AplicacionPruebaException | CalculoResultadoException | ValidacionPruebaException ex) {
+            rollbackQuietly();
+            error(response, HttpServletResponse.SC_CONFLICT, ex.getMessage());
+        }
         catch (Exception ex) {
             rollbackQuietly();
-            error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
+            logError(ex);
+            error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error interno del servidor");
         }
     }
 
@@ -154,9 +170,11 @@ public class VocabularioBApiServlet extends HttpServlet {
             PreguntaVocabulario pregunta = buscarPregunta(requiredText(item, "preguntaId", "idPregunta"));
             OpcionRespuesta opcion = null;
             String opcionId = optionalText(item, "opcionSeleccionadaId", "idOpcionSeleccionada", "opcionId");
+            validarClasificacionFrontend(item, opcionId);
             if (opcionId != null) {
                 opcion = buscarOpcion(opcionId);
             }
+            validarPertenencia(intento, pregunta, opcion);
             ClasificacionRespuesta clasificacion = opcion == null ?
                 clasificacionDesdeJson(item) :
                 null;
@@ -240,7 +258,7 @@ public class VocabularioBApiServlet extends HttpServlet {
     PruebaVocabulario buscarPrueba(String id) {
         PruebaVocabulario prueba = XPersistence.getManager().find(PruebaVocabulario.class, id);
         if (prueba == null) {
-            throw new IllegalArgumentException("No existe la prueba indicada");
+            throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe la prueba indicada");
         }
         return prueba;
     }
@@ -248,7 +266,7 @@ public class VocabularioBApiServlet extends HttpServlet {
     IntentoPrueba buscarIntento(String id) {
         IntentoPrueba intento = XPersistence.getManager().find(IntentoPrueba.class, id);
         if (intento == null) {
-            throw new IllegalArgumentException("No existe el intento indicado");
+            throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe el intento indicado");
         }
         return intento;
     }
@@ -256,7 +274,7 @@ public class VocabularioBApiServlet extends HttpServlet {
     PreguntaVocabulario buscarPregunta(String id) {
         PreguntaVocabulario pregunta = XPersistence.getManager().find(PreguntaVocabulario.class, id);
         if (pregunta == null) {
-            throw new IllegalArgumentException("No existe la pregunta indicada");
+            throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe la pregunta indicada");
         }
         return pregunta;
     }
@@ -264,7 +282,7 @@ public class VocabularioBApiServlet extends HttpServlet {
     OpcionRespuesta buscarOpcion(String id) {
         OpcionRespuesta opcion = XPersistence.getManager().find(OpcionRespuesta.class, id);
         if (opcion == null) {
-            throw new IllegalArgumentException("No existe la opcion indicada");
+            throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe la opcion indicada");
         }
         return opcion;
     }
@@ -272,7 +290,7 @@ public class VocabularioBApiServlet extends HttpServlet {
     Institucion buscarInstitucion(String id) {
         Institucion institucion = XPersistence.getManager().find(Institucion.class, id);
         if (institucion == null) {
-            throw new IllegalArgumentException("No existe la institucion indicada");
+            throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe la institucion indicada");
         }
         return institucion;
     }
@@ -290,7 +308,16 @@ public class VocabularioBApiServlet extends HttpServlet {
 
     void validarIntentoEnProgreso(IntentoPrueba intento) {
         if (!EstadoIntento.EN_PROGRESO.equals(intento.getEstadoIntento())) {
-            throw new AplicacionPruebaException("El intento no esta en progreso");
+            throw new ApiException(HttpServletResponse.SC_CONFLICT, "El intento no esta en progreso");
+        }
+    }
+
+    void validarPertenencia(IntentoPrueba intento, PreguntaVocabulario pregunta, OpcionRespuesta opcion) {
+        if (!pregunta.getPrueba().equals(intento.getPrueba())) {
+            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "La pregunta no pertenece a la prueba del intento");
+        }
+        if (opcion != null && !opcion.getPregunta().equals(pregunta)) {
+            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "La opcion no pertenece a la pregunta indicada");
         }
     }
 
@@ -381,16 +408,49 @@ public class VocabularioBApiServlet extends HttpServlet {
         if (value == null) {
             return ClasificacionRespuesta.OMITIDA;
         }
-        return ClasificacionRespuesta.valueOf(value);
+        return parseClasificacion(value);
+    }
+
+    void validarClasificacionFrontend(JsonNode item, String opcionId) {
+        String value = optionalText(item, "clasificacionRespuesta", "clasificacion");
+        if (value == null) return;
+
+        ClasificacionRespuesta clasificacion = parseClasificacion(value);
+        if (ClasificacionRespuesta.CORRECTA.equals(clasificacion) ||
+            ClasificacionRespuesta.INCORRECTA.equals(clasificacion)) {
+
+            throw new ApiException(
+                HttpServletResponse.SC_BAD_REQUEST,
+                "La clasificacion CORRECTA/INCORRECTA se determina en servidor");
+        }
+        if (opcionId != null && (ClasificacionRespuesta.NO_SE.equals(clasificacion) ||
+            ClasificacionRespuesta.OMITIDA.equals(clasificacion))) {
+
+            throw new ApiException(
+                HttpServletResponse.SC_BAD_REQUEST,
+                "Las respuestas NO_SE u OMITIDA no deben incluir opcion seleccionada");
+        }
+    }
+
+    ClasificacionRespuesta parseClasificacion(String value) {
+        try {
+            return ClasificacionRespuesta.valueOf(value.toUpperCase(Locale.ROOT));
+        }
+        catch (IllegalArgumentException ex) {
+            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "Clasificacion de respuesta invalida");
+        }
     }
 
     JsonNode readBody(HttpServletRequest request) throws IOException {
         try (Reader reader = request.getReader()) {
             JsonNode body = mapper.readTree(reader);
             if (body == null || body.isNull()) {
-                throw new IllegalArgumentException("El cuerpo JSON es requerido");
+                throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "El cuerpo JSON es requerido");
             }
             return body;
+        }
+        catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "JSON invalido");
         }
     }
 
@@ -401,7 +461,8 @@ public class VocabularioBApiServlet extends HttpServlet {
     }
 
     void addCorsHeaders(HttpServletResponse response) {
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        String allowedOrigin = "*"; // Desarrollo local. En despliegue, reemplazar por el origen real del frontend.
+        response.setHeader("Access-Control-Allow-Origin", allowedOrigin);
         response.setHeader("Access-Control-Allow-Headers", "Content-Type");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     }
@@ -426,6 +487,13 @@ public class VocabularioBApiServlet extends HttpServlet {
         }
     }
 
+    void logError(Exception ex) {
+        ServletContext context = getServletContext();
+        if (context != null) {
+            context.log("Error no controlado en API Vocabulario B", ex);
+        }
+    }
+
     String path(HttpServletRequest request) {
         String path = request.getPathInfo();
         return path == null || path.isBlank() ? "/" : path;
@@ -439,7 +507,7 @@ public class VocabularioBApiServlet extends HttpServlet {
     String requiredText(JsonNode node, String... names) {
         String value = optionalText(node, names);
         if (value == null) {
-            throw new IllegalArgumentException("Campo requerido: " + String.join("/", names));
+            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "Campo requerido: " + String.join("/", names));
         }
         return value;
     }
@@ -468,6 +536,20 @@ public class VocabularioBApiServlet extends HttpServlet {
         }
         else {
             json.put(name, value);
+        }
+    }
+
+    static class ApiException extends RuntimeException {
+
+        private final int status;
+
+        ApiException(int status, String message) {
+            super(message);
+            this.status = status;
+        }
+
+        int getStatus() {
+            return status;
         }
     }
 }
