@@ -1,0 +1,715 @@
+direction: down
+
+style: {
+  fill: "#F8FAFC"
+  font-color: "#1F2937"
+}
+
+Modelo: {
+  label: "Modelo del dominio"
+  direction: right
+  style: {
+    fill: "#EEF4FF"
+    stroke: "#4169A8"
+    stroke-width: 2
+    font-color: "#1F2937"
+  }
+
+  UsuariosAcceso: {
+    label: "Usuarios y acceso"
+    direction: down
+    style: {
+      fill: "#EAF7EF"
+      stroke: "#2F7D5A"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+
+    Usuario: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#2F7D5A"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      "<<abstract>>": ""
+      nombres: String
+      apellidos: String
+      correo: String
+      telefono: String
+      fechaNacimiento: LocalDate
+    }
+
+    Psicologo: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#2F7D5A"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      numeroLicencia: String
+      especialidad: String
+      activo: boolean
+    }
+
+    Evaluado: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#2F7D5A"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      codigoEvaluado: String
+      nivelAcademico: NivelAcademico
+    }
+
+    AccesoSistema: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#2F7D5A"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      nombreUsuario: String
+      hashContrasena: String
+      estadoAcceso: EstadoAcceso
+    }
+
+    Institucion: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#2F7D5A"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      nombre: String
+      tipoInstitucion: TipoInstitucion
+      direccion: String
+      correo: String
+      telefono: String
+    }
+  }
+
+  EstructuraPrueba: {
+    label: "Estructura de la prueba"
+    direction: down
+    style: {
+      fill: "#EAF2FF"
+      stroke: "#345995"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+
+    PruebaVocabulario: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#345995"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      codigo: String
+      nombre: String
+      descripcion: String
+      estadoPrueba: EstadoPrueba
+      tiempoLimiteMinutos: int
+      fechaCreacion: LocalDate
+    }
+
+    PreguntaVocabulario: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#345995"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      numero: int
+      enunciado: String
+      puntaje: int
+      activa: boolean
+    }
+
+    OpcionRespuesta: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#345995"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      letra: LetraOpcion
+      texto: String
+      correcta: boolean
+    }
+  }
+
+  AplicacionResultados: {
+    label: "Aplicacion y resultados"
+    direction: down
+    style: {
+      fill: "#F1ECFF"
+      stroke: "#6B4FA3"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+
+    IntentoPrueba: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6B4FA3"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      codigoAplicacion: String
+      estadoIntento: EstadoIntento
+      fechaCreacion: LocalDateTime
+      fechaInicio: LocalDateTime
+      fechaFin: LocalDateTime
+      numeroRespuestas: int
+    }
+
+    RespuestaEvaluado: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6B4FA3"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      correcta: boolean
+      fechaRespuesta: LocalDateTime
+    }
+
+    ResultadoPrueba: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6B4FA3"
+        stroke-width: 2
+        font-color: "#1F2937"
+      }
+      totalPreguntas: int
+      respuestasCorrectas: int
+      respuestasIncorrectas: int
+      respuestasOmitidas: int
+      puntajeDirecto: int
+      porcentaje: BigDecimal
+      interpretacion: String
+      fechaCalculo: LocalDateTime
+    }
+  }
+}
+
+Servicios: {
+  label: "Servicios"
+  direction: right
+  style: {
+    fill: "#FFF4E6"
+    stroke: "#C77D1A"
+    stroke-width: 2
+    font-color: "#1F2937"
+  }
+
+  IAplicacionPruebaService: {
+    shape: class
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#C77D1A"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+    "<<interface>>": ""
+    +iniciarPrueba(): ""
+    +registrarRespuesta(): ""
+    +finalizarPrueba(): ""
+  }
+
+  AplicacionPruebaService: {
+    shape: class
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#C77D1A"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+    "<<service>>": ""
+    +iniciarPrueba(): ""
+    +registrarRespuesta(): ""
+    +finalizarPrueba(): ""
+  }
+
+  ICalculoResultadoService: {
+    shape: class
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#C77D1A"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+    "<<interface>>": ""
+    +calcularResultado(): ""
+  }
+
+  CalculoResultadoService: {
+    shape: class
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#C77D1A"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+    "<<service>>": ""
+    +calcularResultado(): ""
+  }
+
+  IValidacionPruebaService: {
+    shape: class
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#C77D1A"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+    "<<interface>>": ""
+    +validarParaActivar(): ""
+  }
+
+  ValidacionPruebaService: {
+    shape: class
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#C77D1A"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+    "<<service>>": ""
+    +validarParaActivar(): ""
+  }
+}
+
+Complementos: {
+  label: "Enums, excepciones y leyenda"
+  direction: right
+  style: {
+    fill: "#F3F3F6"
+    stroke: "#5D6470"
+    stroke-width: 2
+    font-color: "#1F2937"
+  }
+
+  Enums: {
+    label: "Enums"
+    direction: right
+    style: {
+      fill: "#F1F0FF"
+      stroke: "#6D64B8"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+
+    EstadoAcceso: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6D64B8"
+        font-color: "#1F2937"
+      }
+      "<<enum>>": ""
+      ACTIVO: ""
+      BLOQUEADO: ""
+      INACTIVO: ""
+    }
+
+    EstadoPrueba: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6D64B8"
+        font-color: "#1F2937"
+      }
+      "<<enum>>": ""
+      BORRADOR: ""
+      ACTIVA: ""
+      CANCELADA: ""
+    }
+
+    EstadoIntento: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6D64B8"
+        font-color: "#1F2937"
+      }
+      "<<enum>>": ""
+      PENDIENTE: ""
+      EN_PROGRESO: ""
+      FINALIZADO: ""
+      CALIFICADO: ""
+      ANULADO: ""
+    }
+
+    LetraOpcion: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6D64B8"
+        font-color: "#1F2937"
+      }
+      "<<enum>>": ""
+      A: ""
+      B: ""
+      C: ""
+      D: ""
+      E: ""
+    }
+
+    NivelAcademico: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6D64B8"
+        font-color: "#1F2937"
+      }
+      "<<enum>>": ""
+      PRIMARIA: ""
+      SECUNDARIA: ""
+      TECNICO: ""
+      UNIVERSITARIO: ""
+      POSGRADO: ""
+      OTRO: ""
+    }
+
+    TipoInstitucion: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#6D64B8"
+        font-color: "#1F2937"
+      }
+      "<<enum>>": ""
+      COLEGIO: ""
+      UNIVERSIDAD: ""
+      EMPRESA: ""
+      OTRO: ""
+    }
+  }
+
+  Excepciones: {
+    label: "Excepciones"
+    direction: down
+    style: {
+      fill: "#FFECEC"
+      stroke: "#B94A48"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+
+    AplicacionPruebaException: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#B94A48"
+        font-color: "#1F2937"
+      }
+      "<<exception>>": ""
+    }
+
+    CalculoResultadoException: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#B94A48"
+        font-color: "#1F2937"
+      }
+      "<<exception>>": ""
+    }
+
+    ValidacionPruebaException: {
+      shape: class
+      style: {
+        fill: "#FFFFFF"
+        stroke: "#B94A48"
+        font-color: "#1F2937"
+      }
+      "<<exception>>": ""
+    }
+  }
+
+  Leyenda: {
+    label: "Leyenda"
+    direction: down
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#5D6470"
+      stroke-width: 2
+      font-color: "#1F2937"
+    }
+
+    Asociacion: "Linea continua: asociacion"
+    Herencia: "Triangulo vacio: herencia"
+    Realizacion: "Linea discontinua con triangulo vacio: realizacion / implementacion"
+    Dependencia: "Linea discontinua con flecha simple: dependencia"
+    Agregacion: "Rombo vacio: agregacion"
+    Composicion: "Rombo lleno: composicion"
+    Enum: "Rectangulo de enum: conjunto de valores constantes"
+    Servicio: "Servicio: logica de negocio"
+  }
+}
+
+Modelo.UsuariosAcceso.Psicologo -> Modelo.UsuariosAcceso.Usuario: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  target-arrowhead: {
+    shape: triangle
+    style.filled: false
+  }
+}
+
+Modelo.UsuariosAcceso.Evaluado -> Modelo.UsuariosAcceso.Usuario: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  target-arrowhead: {
+    shape: triangle
+    style.filled: false
+  }
+}
+
+Modelo.UsuariosAcceso.Psicologo -- Modelo.UsuariosAcceso.AccesoSistema: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: none
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..1"
+  }
+}
+
+Modelo.UsuariosAcceso.Institucion -- Modelo.UsuariosAcceso.Evaluado: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: none
+    label: "0..1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..*"
+  }
+}
+
+Modelo.UsuariosAcceso.Psicologo -- Modelo.EstructuraPrueba.PruebaVocabulario: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: none
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..*"
+  }
+}
+
+Modelo.EstructuraPrueba.PruebaVocabulario -- Modelo.EstructuraPrueba.PreguntaVocabulario: {
+  style: {
+    stroke: "#345995"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: diamond
+    style.filled: true
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "1..*"
+  }
+}
+
+Modelo.EstructuraPrueba.PreguntaVocabulario -- Modelo.EstructuraPrueba.OpcionRespuesta: {
+  style: {
+    stroke: "#345995"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: diamond
+    style.filled: true
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "2..*"
+  }
+}
+
+Modelo.UsuariosAcceso.Evaluado -- Modelo.AplicacionResultados.IntentoPrueba: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: none
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..*"
+  }
+}
+
+Modelo.EstructuraPrueba.PruebaVocabulario -- Modelo.AplicacionResultados.IntentoPrueba: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: none
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..*"
+  }
+}
+
+Modelo.AplicacionResultados.IntentoPrueba -- Modelo.AplicacionResultados.RespuestaEvaluado: {
+  style: {
+    stroke: "#6B4FA3"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: diamond
+    style.filled: true
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..*"
+  }
+}
+
+Modelo.EstructuraPrueba.PreguntaVocabulario -- Modelo.AplicacionResultados.RespuestaEvaluado: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: none
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..*"
+  }
+}
+
+Modelo.EstructuraPrueba.OpcionRespuesta -- Modelo.AplicacionResultados.RespuestaEvaluado: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: none
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..*"
+  }
+}
+
+Modelo.AplicacionResultados.IntentoPrueba -- Modelo.AplicacionResultados.ResultadoPrueba: {
+  style: {
+    stroke: "#6B4FA3"
+    stroke-width: 2
+  }
+  source-arrowhead: {
+    shape: diamond
+    style.filled: true
+    label: "1"
+  }
+  target-arrowhead: {
+    shape: none
+    label: "0..1"
+  }
+}
+
+Servicios.AplicacionPruebaService -> Servicios.IAplicacionPruebaService: {
+  style: {
+    stroke: "#C77D1A"
+    stroke-width: 2
+    stroke-dash: 4
+  }
+  target-arrowhead: {
+    shape: triangle
+    style.filled: false
+  }
+}
+
+Servicios.CalculoResultadoService -> Servicios.ICalculoResultadoService: {
+  style: {
+    stroke: "#C77D1A"
+    stroke-width: 2
+    stroke-dash: 4
+  }
+  target-arrowhead: {
+    shape: triangle
+    style.filled: false
+  }
+}
+
+Servicios.ValidacionPruebaService -> Servicios.IValidacionPruebaService: {
+  style: {
+    stroke: "#C77D1A"
+    stroke-width: 2
+    stroke-dash: 4
+  }
+  target-arrowhead: {
+    shape: triangle
+    style.filled: false
+  }
+}
+
+Servicios.AplicacionPruebaService -> Modelo.AplicacionResultados.IntentoPrueba: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+    stroke-dash: 4
+  }
+}
+
+Servicios.CalculoResultadoService -> Modelo.AplicacionResultados.ResultadoPrueba: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+    stroke-dash: 4
+  }
+}
+
+Servicios.ValidacionPruebaService -> Modelo.EstructuraPrueba.PruebaVocabulario: {
+  style: {
+    stroke: "#475569"
+    stroke-width: 2
+    stroke-dash: 4
+  }
+}
