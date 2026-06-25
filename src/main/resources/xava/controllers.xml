@@ -40,7 +40,6 @@ https://github.com/openxava/openxava/blob/master/openxavatest/src/main/resources
                 mode="detail"
                 confirm="true"
                 label="Finalizar y Calcular Nota">
-            <use-object name="xava_view"/>
         </action>
     </controller>
     

@@ -1,6 +1,7 @@
 package org.Ezone.POO.TestVocabulario.model;
 
 import java.time.*;
+import java.util.Collection;
 
 import javax.persistence.*;
 
@@ -12,13 +13,19 @@ import lombok.*;
 
 @Entity
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="codigoAplicacion"))
+@Getter @Setter
 @View(members =
         "codigoAplicacion, estadoIntento;" +
                 "fechaInicio, fechaFin;" +
-                "respuestas { respuestas }" // Aquí se listarán las 77 preguntas
+                "respuestas { respuestas }" // CAMBIADO: 'respuestas' coincide con el nombre de la variable
 )
-@Getter @Setter
 public class IntentoPrueba extends Identifiable {
+
+    @OneToMany(mappedBy="intento", cascade=CascadeType.ALL)
+    private Collection<RespuestaEvaluado> respuestas;
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    private IntentoPrueba intento;
 
     @Column(length=40, nullable=false) @Required
     String codigoAplicacion;
