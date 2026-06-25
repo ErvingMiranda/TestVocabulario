@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test de Vocabulario B</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Aplicación pública</p>
+            <h1>Test de Vocabulario B</h1>
+            <p id="test-summary" class="summary">Cargando prueba activa...</p>
+        </div>
+        <div id="timer" class="timer" hidden aria-live="polite">--:--</div>
+    </header>
+
+    <main class="shell">
+        <section id="loading-screen" class="card">
+            <h2>Cargando</h2>
+            <p>Estamos preparando la prueba. Esto puede tomar unos segundos.</p>
+        </section>
+
+        <section id="start-screen" class="card" hidden>
+            <h2>Datos del evaluado</h2>
+            <p class="muted">Completa tus datos para iniciar. La prueba no se puede pausar una vez iniciada.</p>
+
+            <form id="evaluado-form" novalidate>
+                <div class="grid">
+                    <label>
+                        Nombres
+                        <input id="nombres" name="nombres" type="text" autocomplete="given-name" required>
+                    </label>
+                    <label>
+                        Apellidos
+                        <input id="apellidos" name="apellidos" type="text" autocomplete="family-name" required>
+                    </label>
+                    <label>
+                        Correo
+                        <input id="correo" name="correo" type="email" autocomplete="email" required>
+                    </label>
+                    <label>
+                        Nivel académico
+                        <select id="nivelAcademico" name="nivelAcademico" required>
+                            <option value="">Selecciona una opción</option>
+                            <option value="PRIMARIA">Primaria</option>
+                            <option value="SECUNDARIA">Secundaria</option>
+                            <option value="TECNICO">Técnico</option>
+                            <option value="UNIVERSITARIO">Universitario</option>
+                            <option value="POSGRADO">Posgrado</option>
+                            <option value="OTRO">Otro</option>
+                        </select>
+                    </label>
+                    <label>
+                        Fecha de nacimiento <span class="optional">(opcional)</span>
+                        <input id="fechaNacimiento" name="fechaNacimiento" type="date">
+                    </label>
+                    <label>
+                        Teléfono <span class="optional">(opcional)</span>
+                        <input id="telefono" name="telefono" type="tel" autocomplete="tel">
+                    </label>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="primary">Iniciar prueba</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="instructions-screen" class="card" hidden>
+            <h2>Instrucciones</h2>
+            <div id="instructions-content" class="instructions"></div>
+            <ul class="rules">
+                <li>El cronómetro ya está corriendo y no se puede pausar.</li>
+                <li>Puedes avanzar, retroceder y corregir respuestas anteriores.</li>
+                <li>Si no conoces una respuesta, marca “No sé”.</li>
+                <li>Las preguntas sin responder se enviarán como omitidas al finalizar.</li>
+            </ul>
+            <div class="actions">
+                <button id="begin-test" type="button" class="primary">Comenzar preguntas</button>
+            </div>
+        </section>
+
+        <section id="test-screen" class="card test-card" hidden>
+            <div class="progress-row">
+                <div>
+                    <p id="question-position" class="eyebrow">Pregunta</p>
+                    <h2 id="question-title">Pregunta</h2>
+                </div>
+                <p id="answered-count" class="pill">0 respondidas</p>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+
+            <article id="question-container" class="question"></article>
+
+            <div id="sync-status" class="sync-status" aria-live="polite"></div>
+
+            <div class="navigation">
+                <button id="previous-question" type="button" class="secondary">Anterior</button>
+                <button id="clear-answer" type="button" class="ghost">Dejar en blanco</button>
+                <button id="next-question" type="button" class="secondary">Siguiente</button>
+                <button id="finish-test" type="button" class="primary danger">Finalizar</button>
+            </div>
+        </section>
+
+        <section id="final-screen" class="card final-card" hidden>
+            <h2 id="final-title">Gracias</h2>
+            <p id="final-message">Tus respuestas fueron registradas.</p>
+            <a class="secondary link-button" href="index.html">Volver al inicio</a>
+        </section>
+
+        <section id="error-screen" class="card error-card" hidden>
+            <h2>No se pudo continuar</h2>
+            <p id="error-message"></p>
+            <button id="retry" type="button" class="secondary">Intentar de nuevo</button>
+        </section>
+    </main>
+
+    <noscript>
+        <p class="noscript">Esta prueba requiere JavaScript habilitado para comunicarse con la API.</p>
+    </noscript>
+
+    <script src="app.js" defer></script>
+</body>
+</html>
