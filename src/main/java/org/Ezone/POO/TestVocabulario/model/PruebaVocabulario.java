@@ -1,6 +1,7 @@
 package org.Ezone.POO.TestVocabulario.model;
 
 import java.time.*;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
@@ -14,7 +15,23 @@ import lombok.*;
 @Entity
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="codigo"))
 @Getter @Setter
+@View(members =
+    "ConfiguracionGeneral { codigo; nombre; descripcion; estadoPrueba; psicologo; tiempoLimiteMinutos; fechaCreacion };" +
+    "Preguntas { preguntas };" +
+    "Baremacion { rangosBaremacion }"
+)
+@Tab(properties="codigo, nombre, estadoPrueba, psicologo.nombres, psicologo.apellidos, tiempoLimiteMinutos, fechaCreacion")
 public class PruebaVocabulario extends Identifiable {
+
+    @OneToMany(mappedBy="prueba")
+    @OrderBy("numero")
+    @ListProperties("numero, enunciado, ejemplo, puntuable, activa")
+    Collection<PreguntaVocabulario> preguntas;
+
+    @OneToMany(mappedBy="prueba")
+    @OrderBy("puntajeMinimo")
+    @ListProperties("puntajeMinimo, puntajeMaximo, notaCalculada")
+    Collection<RangoBaremacion> rangosBaremacion;
 
     @Column(length=30, nullable=false) @Required
     String codigo;

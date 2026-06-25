@@ -4,26 +4,40 @@
 
 <application name="TestVocabulario"> 
 	
-	<!-- 
-	A default module for each entity is assumed with the
-	controllers on <default-module/>
+	<!--
+	Back-office modules for evaluators. Technical entities such as
+	AccesoSistema, OpcionRespuesta, RespuestaEvaluado, RangoBaremacion and
+	Institucion are intentionally not exposed as primary menu modules.
 	-->
-	<default-module>		  
-		<controller name="Typical"/>		
-	</default-module>
-	
-	<!-- 
-	You can define additional modules, for example:	  
-	<module name="OnlyReadTeacher">
-		<model name="Teacher"/>
-		<controller name="Print"/>
-	</module>		
-	-->
+
+	<module name="PruebaVocabulario">
+		<model name="PruebaVocabulario"/>
+		<controller name="Typical"/>
+	</module>
+
+	<module name="PreguntaVocabulario">
+		<model name="PreguntaVocabulario"/>
+		<controller name="Typical"/>
+	</module>
 
 	<module name="IntentoPrueba">
 		<model name="IntentoPrueba"/>
-		<controller name="Typical"/>
 		<controller name="IntentoPruebaController"/>
+	</module>
+
+	<module name="ResultadoPrueba">
+		<model name="ResultadoPrueba"/>
+		<controller name="Consulta"/>
+	</module>
+
+	<module name="Evaluado">
+		<model name="Evaluado"/>
+		<controller name="Typical"/>
+	</module>
+
+	<module name="Psicologo">
+		<model name="Psicologo"/>
+		<controller name="Typical"/>
 	</module>
 
 </application>

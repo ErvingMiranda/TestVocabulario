@@ -11,6 +11,8 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
+@View(members = "pregunta; letra; texto; correcta")
+@Tab(properties="pregunta.numero, letra, texto, correcta")
 public class OpcionRespuesta extends Identifiable {
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)

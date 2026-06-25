@@ -1,5 +1,7 @@
 package org.Ezone.POO.TestVocabulario.model;
 
+import java.util.*;
+
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
@@ -10,7 +12,17 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
+@View(members =
+    "DatosDeLaPregunta { prueba; numero; ejemplo, puntuable, activa; enunciado; puntaje };" +
+    "Opciones { opciones }"
+)
+@Tab(properties="prueba.nombre, numero, enunciado, ejemplo, puntuable, activa")
 public class PreguntaVocabulario extends Identifiable {
+
+    @OneToMany(mappedBy="pregunta")
+    @OrderBy("letra")
+    @ListProperties("letra, texto, correcta")
+    Collection<OpcionRespuesta> opciones;
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
     @DescriptionsList(descriptionProperties="nombre")

@@ -15,13 +15,15 @@ import lombok.*;
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="codigoAplicacion"))
 @Getter @Setter
 @View(members =
-        "codigoAplicacion, estadoIntento;" +
-                "fechaInicio, fechaFin;" +
-                "respuestas { respuestas }" // CAMBIADO: 'respuestas' coincide con el nombre de la variable
+        "DatosDelIntento { codigoAplicacion; prueba; evaluado; estadoIntento; fechaInicio, fechaFin; numeroRespuestas };" +
+        "Respuestas { respuestas }"
 )
+@Tab(properties="codigoAplicacion, evaluado.nombres, evaluado.apellidos, prueba.nombre, estadoIntento, fechaInicio, fechaFin, numeroRespuestas")
 public class IntentoPrueba extends Identifiable {
 
     @OneToMany(mappedBy="intento", cascade=CascadeType.ALL)
+    @ReadOnly
+    @ListProperties("pregunta.numero, opcionSeleccionada.letra, clasificacionRespuesta, correcta, fechaRespuesta")
     Collection<RespuestaEvaluado> respuestas;
 
     @Column(length=40, nullable=false) @Required

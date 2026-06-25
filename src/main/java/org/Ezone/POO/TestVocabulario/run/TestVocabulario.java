@@ -9,8 +9,24 @@ import org.openxava.util.*;
 public class TestVocabulario {
 
 	public static void main(String[] args) throws Exception {
-		DBServer.start("TestVocabulario-db"); // To use your own database comment this line and configure src/main/webapp/META-INF/context.xml
+		configurarPostgreSQL();
 		AppServer.run("TestVocabulario"); // Use AppServer.run("") to run in root context
+	}
+
+	private static void configurarPostgreSQL() {
+		setRequired("testvocabulario.db.url", "TESTVOCABULARIO_DB_URL");
+		setRequired("testvocabulario.db.user", "TESTVOCABULARIO_DB_USER");
+		setRequired("testvocabulario.db.password", "TESTVOCABULARIO_DB_PASSWORD");
+	}
+
+	private static void setRequired(String propertyName, String environmentName) {
+		if (System.getProperty(propertyName) != null) return;
+
+		String value = System.getenv(environmentName);
+		if (value == null || value.isBlank()) {
+			throw new IllegalStateException("Configure la variable de entorno " + environmentName + " para usar PostgreSQL");
+		}
+		System.setProperty(propertyName, value);
 	}
 
 }

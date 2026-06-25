@@ -33,8 +33,15 @@ https://github.com/openxava/openxava/blob/master/openxavatest/src/main/resources
 	</controller>    
     -->
 
+    <controller name="Consulta">
+        <extends controller="Mode"/>
+        <extends controller="List"/>
+        <extends controller="Navigation"/>
+        <extends controller="Print"/>
+    </controller>
+
     <controller name="IntentoPruebaController">
-        <extends controller="Typical"/>
+        <extends controller="Consulta"/>
         <action name="finalizarYCalcular"
                 class="org.Ezone.POO.TestVocabulario.actions.FinalizarYCalcularAction"
                 mode="detail"

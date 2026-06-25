@@ -13,11 +13,11 @@ import lombok.*;
 @Entity
 @Getter @Setter
 @View(members =
-        "intento;" +
-                "resumen { totalPreguntas, cantidadCorrectas, cantidadIncorrectas, cantidadNoSe, cantidadOmitidas };" +
-                "calificacion { puntajeDirecto, notaFinal };" +
-                "fechaCalculo"
+        "Intento { intento; fechaCalculo; tiempoDuracionMinutos };" +
+        "Calificacion { puntajeDirecto, notaFinal; cantidadCorrectas, cantidadIncorrectas; cantidadNoSe, cantidadOmitidas };" +
+        "Interpretacion { interpretacion }"
 )
+@Tab(properties="intento.codigoAplicacion, intento.evaluado.nombres, intento.evaluado.apellidos, fechaCalculo, puntajeDirecto, notaFinal, cantidadCorrectas, cantidadIncorrectas, cantidadNoSe, cantidadOmitidas, interpretacion")
 public class ResultadoPrueba extends Identifiable {
 
     @OneToOne(fetch=FetchType.LAZY, optional=false)
@@ -25,12 +25,16 @@ public class ResultadoPrueba extends Identifiable {
     @Required
     IntentoPrueba intento;
 
+    @Hidden
     int totalPreguntas;
 
+    @Hidden
     int respuestasCorrectas;
 
+    @Hidden
     int respuestasIncorrectas;
 
+    @Hidden
     int respuestasOmitidas;
 
     int puntajeDirecto;
@@ -45,6 +49,7 @@ public class ResultadoPrueba extends Identifiable {
 
     int cantidadOmitidas;
 
+    @Hidden
     BigDecimal porcentaje;
 
     @Stereotype("MEMO")
