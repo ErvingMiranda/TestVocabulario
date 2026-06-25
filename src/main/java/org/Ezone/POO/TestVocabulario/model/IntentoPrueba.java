@@ -12,6 +12,11 @@ import lombok.*;
 
 @Entity
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="codigoAplicacion"))
+@View(members =
+        "codigoAplicacion, estadoIntento;" +
+                "fechaInicio, fechaFin;" +
+                "respuestas { respuestas }" // Aquí se listarán las 77 preguntas
+)
 @Getter @Setter
 public class IntentoPrueba extends Identifiable {
 

@@ -10,6 +10,7 @@ import org.openxava.model.*;
 import lombok.*;
 
 @Entity
+@View(members = "pregunta; opcionSeleccionada")
 @Getter @Setter
 public class RespuestaEvaluado extends Identifiable {
 
