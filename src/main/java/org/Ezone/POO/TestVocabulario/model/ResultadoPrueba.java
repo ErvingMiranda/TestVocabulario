@@ -14,8 +14,8 @@ import lombok.*;
 @Getter @Setter
 @View(members =
         "intento;" +
-                "resumen { totalPreguntas, respuestasCorrectas, respuestasIncorrectas, respuestasOmitidas };" +
-                "desempeno { porcentaje, interpretacion };" +
+                "resumen { totalPreguntas, cantidadCorrectas, cantidadIncorrectas, cantidadNoSe, cantidadOmitidas };" +
+                "calificacion { puntajeDirecto, notaFinal };" +
                 "fechaCalculo"
 )
 public class ResultadoPrueba extends Identifiable {
@@ -34,6 +34,16 @@ public class ResultadoPrueba extends Identifiable {
     int respuestasOmitidas;
 
     int puntajeDirecto;
+
+    BigDecimal notaFinal;
+
+    int cantidadCorrectas;
+
+    int cantidadIncorrectas;
+
+    int cantidadNoSe;
+
+    int cantidadOmitidas;
 
     BigDecimal porcentaje;
 

@@ -3,14 +3,16 @@ package org.Ezone.POO.TestVocabulario.model;
 import java.time.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 
+import org.Ezone.POO.TestVocabulario.enums.*;
 import org.openxava.annotations.*;
 import org.openxava.model.*;
 
 import lombok.*;
 
 @Entity
-@View(members = "pregunta; opcionSeleccionada")
+@View(members = "pregunta; opcionSeleccionada; clasificacionRespuesta")
 @Getter @Setter
 public class RespuestaEvaluado extends Identifiable {
 
@@ -24,10 +26,14 @@ public class RespuestaEvaluado extends Identifiable {
     @Required
     PreguntaVocabulario pregunta;
 
-    @ManyToOne(fetch=FetchType.LAZY, optional=false)
+    @ManyToOne(fetch=FetchType.LAZY, optional=true)
     @DescriptionsList(descriptionProperties="letra, texto")
-    @Required
     OpcionRespuesta opcionSeleccionada;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable=false)
+    @NotNull @Required
+    ClasificacionRespuesta clasificacionRespuesta = ClasificacionRespuesta.OMITIDA;
 
     @Required
     boolean correcta;

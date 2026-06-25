@@ -1,4 +1,4 @@
-package org.Ezone.POO.TestVocabulario.action;
+package org.Ezone.POO.TestVocabulario.actions;
 
 import org.Ezone.POO.TestVocabulario.enums.EstadoIntento;
 import org.Ezone.POO.TestVocabulario.model.*;
@@ -7,8 +7,6 @@ import org.openxava.actions.*;
 import org.openxava.jpa.*;
 
 public class FinalizarYCalcularAction extends ViewBaseAction {
-
-
 
     @Override
     public void execute() throws Exception {
@@ -35,10 +33,10 @@ public class FinalizarYCalcularAction extends ViewBaseAction {
 
             addMessage("Prueba finalizada y calificada con éxito.");
             getView().refresh();
-
-        } catch (Exception e) {
-            XPersistence.rollback(); // Importante: deshacer cambios si algo falló
-            addError("Error al finalizar la prueba: " + e.getMessage());
+        }
+        catch (Exception ex) {
+            XPersistence.rollback();
+            addError("Error al finalizar la prueba: " + ex.getMessage());
         }
     }
 }

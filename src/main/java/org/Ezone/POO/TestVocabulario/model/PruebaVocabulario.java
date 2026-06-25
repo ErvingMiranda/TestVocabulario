@@ -36,7 +36,7 @@ public class PruebaVocabulario extends Identifiable {
     Psicologo psicologo;
 
     @Min(1) @Required
-    int tiempoLimiteMinutos;
+    int tiempoLimiteMinutos = 6;
 
     LocalDate fechaCreacion = LocalDate.now();
 

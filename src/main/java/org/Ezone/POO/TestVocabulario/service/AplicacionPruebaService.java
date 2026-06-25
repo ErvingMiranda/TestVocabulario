@@ -22,7 +22,15 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
 
     @Override
     public RespuestaEvaluado registrarRespuesta(IntentoPrueba intento, PreguntaVocabulario pregunta, OpcionRespuesta opcion) {
-        validarRespuesta(intento, pregunta, opcion);
+        return registrarRespuesta(intento, pregunta, opcion, null);
+    }
+
+    @Override
+    public RespuestaEvaluado registrarRespuesta(IntentoPrueba intento, PreguntaVocabulario pregunta,
+        OpcionRespuesta opcion, ClasificacionRespuesta clasificacionRespuesta) {
+
+        ClasificacionRespuesta clasificacion = resolverClasificacion(opcion, clasificacionRespuesta);
+        validarRespuesta(intento, pregunta, opcion, clasificacion);
         RespuestaEvaluado respuesta = buscarRespuesta(intento, pregunta);
         if (respuesta == null) {
             respuesta = new RespuestaEvaluado();
@@ -31,7 +39,8 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
             XPersistence.getManager().persist(respuesta);
         }
         respuesta.setOpcionSeleccionada(opcion);
-        respuesta.setCorrecta(opcion.isCorrecta());
+        respuesta.setClasificacionRespuesta(clasificacion);
+        respuesta.setCorrecta(ClasificacionRespuesta.CORRECTA.equals(clasificacion));
         respuesta.setFechaRespuesta(LocalDateTime.now());
         intento.setNumeroRespuestas(contarRespuestas(intento));
         return respuesta;
@@ -45,6 +54,7 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         if (!EstadoIntento.EN_PROGRESO.equals(intento.getEstadoIntento())) {
             throw new AplicacionPruebaException("Solo se puede finalizar una prueba en progreso");
         }
+        registrarOmisiones(intento);
         intento.setEstadoIntento(EstadoIntento.FINALIZADO);
         intento.setFechaFin(LocalDateTime.now());
         intento.setNumeroRespuestas(contarRespuestas(intento));
@@ -87,6 +97,37 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         return total.intValue();
     }
 
+    void registrarOmisiones(IntentoPrueba intento) {
+        for (PreguntaVocabulario pregunta : preguntasActivas(intento.getPrueba())) {
+            if (buscarRespuesta(intento, pregunta) == null) {
+                RespuestaEvaluado respuesta = new RespuestaEvaluado();
+                respuesta.setIntento(intento);
+                respuesta.setPregunta(pregunta);
+                respuesta.setClasificacionRespuesta(ClasificacionRespuesta.OMITIDA);
+                respuesta.setCorrecta(false);
+                respuesta.setFechaRespuesta(LocalDateTime.now());
+                XPersistence.getManager().persist(respuesta);
+            }
+        }
+    }
+
+    java.util.List<PreguntaVocabulario> preguntasActivas(PruebaVocabulario prueba) {
+        return XPersistence.getManager()
+            .createQuery("from PreguntaVocabulario p where p.prueba = :prueba and p.activa = true", PreguntaVocabulario.class)
+            .setParameter("prueba", prueba)
+            .getResultList();
+    }
+
+    ClasificacionRespuesta resolverClasificacion(OpcionRespuesta opcion, ClasificacionRespuesta clasificacionRespuesta) {
+        if (opcion != null) {
+            return opcion.isCorrecta() ? ClasificacionRespuesta.CORRECTA : ClasificacionRespuesta.INCORRECTA;
+        }
+        if (ClasificacionRespuesta.NO_SE.equals(clasificacionRespuesta)) {
+            return ClasificacionRespuesta.NO_SE;
+        }
+        return ClasificacionRespuesta.OMITIDA;
+    }
+
     void validarInicio(IntentoPrueba intento) {
         if (!EstadoIntento.PENDIENTE.equals(intento.getEstadoIntento())) {
             throw new AplicacionPruebaException("Solo se puede iniciar una prueba pendiente");
@@ -96,15 +137,25 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         }
     }
 
-    void validarRespuesta(IntentoPrueba intento, PreguntaVocabulario pregunta, OpcionRespuesta opcion) {
-        if (intento == null || pregunta == null || opcion == null) {
-            throw new AplicacionPruebaException("Intento, pregunta y opcion son requeridos");
+    void validarRespuesta(IntentoPrueba intento, PreguntaVocabulario pregunta, OpcionRespuesta opcion,
+        ClasificacionRespuesta clasificacionRespuesta) {
+
+        if (intento == null || pregunta == null || clasificacionRespuesta == null) {
+            throw new AplicacionPruebaException("Intento, pregunta y clasificacion son requeridos");
         }
         if (!EstadoIntento.EN_PROGRESO.equals(intento.getEstadoIntento())) {
             throw new AplicacionPruebaException("Solo se puede responder una prueba en progreso");
         }
         if (!pregunta.getPrueba().equals(intento.getPrueba())) {
             throw new AplicacionPruebaException("La pregunta no pertenece a la prueba del intento");
+        }
+        if (opcion == null) {
+            if (ClasificacionRespuesta.CORRECTA.equals(clasificacionRespuesta) ||
+                ClasificacionRespuesta.INCORRECTA.equals(clasificacionRespuesta)) {
+
+                throw new AplicacionPruebaException("Una respuesta correcta o incorrecta requiere opcion seleccionada");
+            }
+            return;
         }
         if (!opcion.getPregunta().equals(pregunta)) {
             throw new AplicacionPruebaException("La opcion no pertenece a la pregunta indicada");

@@ -2,6 +2,7 @@ package org.Ezone.POO.TestVocabulario.service;
 
 import java.math.*;
 import java.time.*;
+import java.util.*;
 
 import org.Ezone.POO.TestVocabulario.enums.*;
 import org.Ezone.POO.TestVocabulario.exception.*;
@@ -13,27 +14,35 @@ public class CalculoResultadoService implements ICalculoResultadoService {
     @Override
     public ResultadoPrueba calcularResultado(IntentoPrueba intento) {
         validarIntento(intento);
-        int totalPreguntas = contarPreguntas(intento.getPrueba());
-        int respuestasCorrectas = contarRespuestasCorrectas(intento);
-        int respuestasIncorrectas = contarRespuestasIncorrectas(intento);
-        int respuestasContestadas = contarRespuestasContestadas(intento);
-        int respuestasOmitidas = Math.max(totalPreguntas - respuestasContestadas, 0);
-        int puntajeDirecto = calcularPuntajeDirecto(intento);
-        int puntajeTotal = calcularPuntajeTotal(intento.getPrueba());
-        BigDecimal porcentaje = calcularPorcentaje(puntajeDirecto, puntajeTotal);
+        clasificarRespuestas(intento);
+
+        int totalPreguntas = contarPreguntasPuntuables(intento.getPrueba());
+        int cantidadCorrectas = contarPorClasificacion(intento, ClasificacionRespuesta.CORRECTA);
+        int cantidadIncorrectas = contarPorClasificacion(intento, ClasificacionRespuesta.INCORRECTA);
+        int cantidadNoSe = contarPorClasificacion(intento, ClasificacionRespuesta.NO_SE);
+        int cantidadOmitidas = contarOmitidas(intento, totalPreguntas);
+        int puntajeDirecto = cantidadCorrectas;
+        BigDecimal notaFinal = calcularNotaFinal(intento.getPrueba(), puntajeDirecto);
+
         ResultadoPrueba resultado = buscarResultado(intento);
         if (resultado == null) {
             resultado = new ResultadoPrueba();
             resultado.setIntento(intento);
             XPersistence.getManager().persist(resultado);
         }
+
         resultado.setTotalPreguntas(totalPreguntas);
-        resultado.setRespuestasCorrectas(respuestasCorrectas);
-        resultado.setRespuestasIncorrectas(respuestasIncorrectas);
-        resultado.setRespuestasOmitidas(respuestasOmitidas);
+        resultado.setRespuestasCorrectas(cantidadCorrectas);
+        resultado.setRespuestasIncorrectas(cantidadIncorrectas);
+        resultado.setRespuestasOmitidas(cantidadOmitidas);
+        resultado.setCantidadCorrectas(cantidadCorrectas);
+        resultado.setCantidadIncorrectas(cantidadIncorrectas);
+        resultado.setCantidadNoSe(cantidadNoSe);
+        resultado.setCantidadOmitidas(cantidadOmitidas);
         resultado.setPuntajeDirecto(puntajeDirecto);
-        resultado.setPorcentaje(porcentaje);
-        resultado.setInterpretacion(interpretar(porcentaje));
+        resultado.setNotaFinal(notaFinal);
+        resultado.setPorcentaje(null);
+        resultado.setInterpretacion("Nota final calculada por tabla de baremacion");
         resultado.setFechaCalculo(LocalDateTime.now());
         intento.setEstadoIntento(EstadoIntento.CALIFICADO);
         return resultado;
@@ -58,77 +67,148 @@ public class CalculoResultadoService implements ICalculoResultadoService {
             .orElse(null);
     }
 
-    int contarPreguntas(PruebaVocabulario prueba) {
-        Long total = XPersistence.getManager()
-            .createQuery("select count(p) from PreguntaVocabulario p where p.prueba = :prueba and p.activa = true", Long.class)
-            .setParameter("prueba", prueba)
-            .getSingleResult();
-        return total.intValue();
+    void clasificarRespuestas(IntentoPrueba intento) {
+        for (RespuestaEvaluado respuesta : respuestas(intento)) {
+            ClasificacionRespuesta clasificacion = clasificar(respuesta);
+            respuesta.setClasificacionRespuesta(clasificacion);
+            respuesta.setCorrecta(ClasificacionRespuesta.CORRECTA.equals(clasificacion));
+        }
     }
 
-    int contarRespuestasCorrectas(IntentoPrueba intento) {
-        Long total = XPersistence.getManager()
-            .createQuery("select count(r) from RespuestaEvaluado r where r.intento = :intento and r.correcta = true", Long.class)
+    List<RespuestaEvaluado> respuestas(IntentoPrueba intento) {
+        return XPersistence.getManager()
+            .createQuery("from RespuestaEvaluado r where r.intento = :intento", RespuestaEvaluado.class)
             .setParameter("intento", intento)
-            .getSingleResult();
-        return total.intValue();
+            .getResultList();
     }
 
-    int contarRespuestasIncorrectas(IntentoPrueba intento) {
-        Long total = XPersistence.getManager()
-            .createQuery("select count(r) from RespuestaEvaluado r where r.intento = :intento and r.correcta = false", Long.class)
-            .setParameter("intento", intento)
-            .getSingleResult();
-        return total.intValue();
+    ClasificacionRespuesta clasificar(RespuestaEvaluado respuesta) {
+        if (respuesta.getOpcionSeleccionada() == null) {
+            if (ClasificacionRespuesta.NO_SE.equals(respuesta.getClasificacionRespuesta())) {
+                return ClasificacionRespuesta.NO_SE;
+            }
+            return ClasificacionRespuesta.OMITIDA;
+        }
+        return respuesta.getOpcionSeleccionada().isCorrecta() ?
+            ClasificacionRespuesta.CORRECTA :
+            ClasificacionRespuesta.INCORRECTA;
     }
 
-    int contarRespuestasContestadas(IntentoPrueba intento) {
-        Long total = XPersistence.getManager()
-            .createQuery("select count(r) from RespuestaEvaluado r where r.intento = :intento", Long.class)
-            .setParameter("intento", intento)
-            .getSingleResult();
-        return total.intValue();
-    }
-
-    int calcularPuntajeDirecto(IntentoPrueba intento) {
+    int contarPreguntasPuntuables(PruebaVocabulario prueba) {
         Long total = XPersistence.getManager()
             .createQuery(
-                "select coalesce(sum(r.pregunta.puntaje), 0) from RespuestaEvaluado r where r.intento = :intento and r.correcta = true",
-                Long.class)
-            .setParameter("intento", intento)
-            .getSingleResult();
-        return total.intValue();
-    }
-
-    int calcularPuntajeTotal(PruebaVocabulario prueba) {
-        Long total = XPersistence.getManager()
-            .createQuery(
-                "select coalesce(sum(p.puntaje), 0) from PreguntaVocabulario p where p.prueba = :prueba and p.activa = true",
+                "select count(p) from PreguntaVocabulario p " +
+                    "where p.prueba = :prueba and p.activa = true and p.ejemplo = false and p.puntuable = true",
                 Long.class)
             .setParameter("prueba", prueba)
             .getSingleResult();
         return total.intValue();
     }
 
-    BigDecimal calcularPorcentaje(int puntajeDirecto, int puntajeTotal) {
-        if (puntajeTotal == 0) {
-            return BigDecimal.ZERO;
-        }
-        return BigDecimal.valueOf(puntajeDirecto)
-            .multiply(BigDecimal.valueOf(100))
-            .divide(BigDecimal.valueOf(puntajeTotal), 2, RoundingMode.HALF_UP);
+    int contarPorClasificacion(IntentoPrueba intento, ClasificacionRespuesta clasificacion) {
+        Long total = XPersistence.getManager()
+            .createQuery(
+                "select count(r) from RespuestaEvaluado r " +
+                    "where r.intento = :intento " +
+                    "and r.pregunta.activa = true " +
+                    "and r.pregunta.ejemplo = false " +
+                    "and r.pregunta.puntuable = true " +
+                    "and r.clasificacionRespuesta = :clasificacion",
+                Long.class)
+            .setParameter("intento", intento)
+            .setParameter("clasificacion", clasificacion)
+            .getSingleResult();
+        return total.intValue();
     }
 
-    String interpretar(BigDecimal porcentaje) {
-        if (porcentaje.compareTo(BigDecimal.valueOf(80)) >= 0) {
-            return "Desempeno alto en vocabulario";
+    int contarOmitidas(IntentoPrueba intento, int totalPreguntas) {
+        int omitidasRegistradas = contarPreguntasPorClasificacion(intento, ClasificacionRespuesta.OMITIDA);
+        int preguntasConRespuesta = contarPreguntasRespondidasPuntuables(intento);
+        int omitidasSinRegistro = Math.max(totalPreguntas - preguntasConRespuesta, 0);
+        return omitidasRegistradas + omitidasSinRegistro;
+    }
+
+    int contarPreguntasPorClasificacion(IntentoPrueba intento, ClasificacionRespuesta clasificacion) {
+        Long total = XPersistence.getManager()
+            .createQuery(
+                "select count(distinct r.pregunta) from RespuestaEvaluado r " +
+                    "where r.intento = :intento " +
+                    "and r.pregunta.activa = true " +
+                    "and r.pregunta.ejemplo = false " +
+                    "and r.pregunta.puntuable = true " +
+                    "and r.clasificacionRespuesta = :clasificacion",
+                Long.class)
+            .setParameter("intento", intento)
+            .setParameter("clasificacion", clasificacion)
+            .getSingleResult();
+        return total.intValue();
+    }
+
+    int contarPreguntasRespondidasPuntuables(IntentoPrueba intento) {
+        Long total = XPersistence.getManager()
+            .createQuery(
+                "select count(distinct r.pregunta) from RespuestaEvaluado r " +
+                    "where r.intento = :intento " +
+                    "and r.pregunta.activa = true " +
+                    "and r.pregunta.ejemplo = false " +
+                    "and r.pregunta.puntuable = true",
+                Long.class)
+            .setParameter("intento", intento)
+            .getSingleResult();
+        return total.intValue();
+    }
+
+    BigDecimal calcularNotaFinal(PruebaVocabulario prueba, int puntajeDirecto) {
+        BigDecimal nota = buscarNotaEnRango(prueba, puntajeDirecto);
+        if (nota != null) {
+            return nota;
         }
-        if (porcentaje.compareTo(BigDecimal.valueOf(60)) >= 0) {
-            return "Desempeno esperado en vocabulario";
+
+        Integer puntajeMaximoConfigurado = buscarPuntajeMaximoConfigurado(prueba);
+        if (puntajeMaximoConfigurado == null) {
+            throw new CalculoResultadoException("Debe configurar al menos un rango de baremacion");
         }
-        if (porcentaje.compareTo(BigDecimal.valueOf(40)) >= 0) {
-            return "Desempeno bajo en vocabulario";
+        if (puntajeDirecto > puntajeMaximoConfigurado) {
+            return buscarNotaMaxima(prueba);
         }
-        return "Desempeno muy bajo en vocabulario";
+
+        throw new CalculoResultadoException(
+            "No existe un rango de baremacion para el puntaje directo " + puntajeDirecto);
+    }
+
+    BigDecimal buscarNotaEnRango(PruebaVocabulario prueba, int puntajeDirecto) {
+        return XPersistence.getManager()
+            .createQuery(
+                "select r.notaCalculada from RangoBaremacion r " +
+                    "where r.prueba = :prueba " +
+                    "and r.puntajeMinimo <= :puntajeDirecto " +
+                    "and r.puntajeMaximo >= :puntajeDirecto " +
+                    "order by r.puntajeMinimo",
+                BigDecimal.class)
+            .setParameter("prueba", prueba)
+            .setParameter("puntajeDirecto", puntajeDirecto)
+            .setMaxResults(1)
+            .getResultList()
+            .stream()
+            .findFirst()
+            .orElse(null);
+    }
+
+    Integer buscarPuntajeMaximoConfigurado(PruebaVocabulario prueba) {
+        return XPersistence.getManager()
+            .createQuery(
+                "select max(r.puntajeMaximo) from RangoBaremacion r where r.prueba = :prueba",
+                Integer.class)
+            .setParameter("prueba", prueba)
+            .getSingleResult();
+    }
+
+    BigDecimal buscarNotaMaxima(PruebaVocabulario prueba) {
+        return XPersistence.getManager()
+            .createQuery(
+                "select max(r.notaCalculada) from RangoBaremacion r where r.prueba = :prueba",
+                BigDecimal.class)
+            .setParameter("prueba", prueba)
+            .getSingleResult();
     }
 }

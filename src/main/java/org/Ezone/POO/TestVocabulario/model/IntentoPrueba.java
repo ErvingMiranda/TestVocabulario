@@ -22,10 +22,7 @@ import lombok.*;
 public class IntentoPrueba extends Identifiable {
 
     @OneToMany(mappedBy="intento", cascade=CascadeType.ALL)
-    private Collection<RespuestaEvaluado> respuestas;
-
-    @ManyToOne(fetch=FetchType.LAZY)
-    private IntentoPrueba intento;
+    Collection<RespuestaEvaluado> respuestas;
 
     @Column(length=40, nullable=false) @Required
     String codigoAplicacion;
