@@ -22,8 +22,8 @@ public class CalculoResultadoService implements ICalculoResultadoService {
         int cantidadIncorrectas = contarPorClasificacion(intento, ClasificacionRespuesta.INCORRECTA);
         int cantidadNoSe = contarPorClasificacion(intento, ClasificacionRespuesta.NO_SE);
         int cantidadOmitidas = contarOmitidas(intento, totalPreguntas);
-        int puntajeDirecto = cantidadCorrectas;
-        BigDecimal notaFinal = calcularNotaFinal(intento.getPrueba(), puntajeDirecto);
+        int puntajeDirecto = calcularPuntajeDirecto(intento);
+        RangoBaremacion rangoBaremacion = buscarRangoBaremacion(intento.getPrueba(), puntajeDirecto);
 
         ResultadoPrueba resultado = buscarResultado(intento);
         if (resultado == null) {
@@ -41,9 +41,9 @@ public class CalculoResultadoService implements ICalculoResultadoService {
         resultado.setCantidadNoSe(cantidadNoSe);
         resultado.setCantidadOmitidas(cantidadOmitidas);
         resultado.setPuntajeDirecto(puntajeDirecto);
-        resultado.setNotaFinal(notaFinal);
+        resultado.setNotaFinal(rangoBaremacion.getNotaCalculada());
         resultado.setPorcentaje(null);
-        resultado.setInterpretacion("Nota final calculada por tabla de baremacion");
+        resultado.setInterpretacion(rangoBaremacion.getInterpretacion());
         resultado.setFechaCalculo(LocalDateTime.now());
         intento.setEstadoIntento(EstadoIntento.CALIFICADO);
         return resultado;
@@ -106,6 +106,22 @@ public class CalculoResultadoService implements ICalculoResultadoService {
         return total.intValue();
     }
 
+    int calcularPuntajeDirecto(IntentoPrueba intento) {
+        Number total = XPersistence.getManager()
+            .createQuery(
+                "select sum(r.pregunta.puntaje) from RespuestaEvaluado r " +
+                    "where r.intento = :intento " +
+                    "and r.pregunta.activa = true " +
+                    "and r.pregunta.ejemplo = false " +
+                    "and r.pregunta.puntuable = true " +
+                    "and r.clasificacionRespuesta = :clasificacion",
+                Number.class)
+            .setParameter("intento", intento)
+            .setParameter("clasificacion", ClasificacionRespuesta.CORRECTA)
+            .getSingleResult();
+        return total == null ? 0 : total.intValue();
+    }
+
     int contarPorClasificacion(IntentoPrueba intento, ClasificacionRespuesta clasificacion) {
         Long total = XPersistence.getManager()
             .createQuery(
@@ -159,10 +175,10 @@ public class CalculoResultadoService implements ICalculoResultadoService {
         return total.intValue();
     }
 
-    BigDecimal calcularNotaFinal(PruebaVocabulario prueba, int puntajeDirecto) {
-        BigDecimal nota = buscarNotaEnRango(prueba, puntajeDirecto);
-        if (nota != null) {
-            return nota;
+    RangoBaremacion buscarRangoBaremacion(PruebaVocabulario prueba, int puntajeDirecto) {
+        RangoBaremacion rango = buscarRangoEnPuntaje(prueba, puntajeDirecto);
+        if (rango != null) {
+            return rango;
         }
 
         Integer puntajeMaximoConfigurado = buscarPuntajeMaximoConfigurado(prueba);
@@ -170,22 +186,22 @@ public class CalculoResultadoService implements ICalculoResultadoService {
             throw new CalculoResultadoException("Debe configurar al menos un rango de baremacion");
         }
         if (puntajeDirecto > puntajeMaximoConfigurado) {
-            return buscarNotaMaxima(prueba);
+            return buscarRangoMaximoConfigurado(prueba);
         }
 
         throw new CalculoResultadoException(
             "No existe un rango de baremacion para el puntaje directo " + puntajeDirecto);
     }
 
-    BigDecimal buscarNotaEnRango(PruebaVocabulario prueba, int puntajeDirecto) {
+    RangoBaremacion buscarRangoEnPuntaje(PruebaVocabulario prueba, int puntajeDirecto) {
         return XPersistence.getManager()
             .createQuery(
-                "select r.notaCalculada from RangoBaremacion r " +
+                "from RangoBaremacion r " +
                     "where r.prueba = :prueba " +
                     "and r.puntajeMinimo <= :puntajeDirecto " +
                     "and r.puntajeMaximo >= :puntajeDirecto " +
                     "order by r.puntajeMinimo",
-                BigDecimal.class)
+                RangoBaremacion.class)
             .setParameter("prueba", prueba)
             .setParameter("puntajeDirecto", puntajeDirecto)
             .setMaxResults(1)
@@ -204,12 +220,13 @@ public class CalculoResultadoService implements ICalculoResultadoService {
             .getSingleResult();
     }
 
-    BigDecimal buscarNotaMaxima(PruebaVocabulario prueba) {
+    RangoBaremacion buscarRangoMaximoConfigurado(PruebaVocabulario prueba) {
         return XPersistence.getManager()
             .createQuery(
-                "select max(r.notaCalculada) from RangoBaremacion r where r.prueba = :prueba",
-                BigDecimal.class)
+                "from RangoBaremacion r where r.prueba = :prueba order by r.puntajeMaximo desc",
+                RangoBaremacion.class)
             .setParameter("prueba", prueba)
+            .setMaxResults(1)
             .getSingleResult();
     }
 }

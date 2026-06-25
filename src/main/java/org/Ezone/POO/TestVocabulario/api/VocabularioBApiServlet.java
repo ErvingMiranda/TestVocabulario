@@ -38,7 +38,7 @@ public class VocabularioBApiServlet extends HttpServlet {
         try {
             String path = path(request);
             if ("/pruebas/vocabulario-b".equals(path)) {
-                responderPruebaActiva(response);
+                responderPrueba(request, response);
                 return;
             }
             error(response, HttpServletResponse.SC_NOT_FOUND, "Endpoint no encontrado");
@@ -102,11 +102,14 @@ public class VocabularioBApiServlet extends HttpServlet {
         }
     }
 
-    void responderPruebaActiva(HttpServletResponse response) throws IOException {
-        PruebaVocabulario prueba = buscarPruebaActiva();
+    void responderPrueba(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        PruebaVocabulario prueba = buscarPruebaPublica(request);
         if (prueba == null) {
             error(response, HttpServletResponse.SC_NOT_FOUND, "No hay una prueba de vocabulario activa");
             return;
+        }
+        if (!prueba.activa()) {
+            throw new ApiException(HttpServletResponse.SC_CONFLICT, "La prueba indicada no esta activa");
         }
 
         new ValidacionPruebaService().validarParaActivar(prueba);
@@ -170,11 +173,11 @@ public class VocabularioBApiServlet extends HttpServlet {
             PreguntaVocabulario pregunta = buscarPregunta(requiredText(item, "preguntaId", "idPregunta"));
             OpcionRespuesta opcion = null;
             String opcionId = optionalText(item, "opcionSeleccionadaId", "idOpcionSeleccionada", "opcionId");
-            validarClasificacionFrontend(item, opcionId);
             if (opcionId != null) {
                 opcion = buscarOpcion(opcionId);
             }
             validarPertenencia(intento, pregunta, opcion);
+            validarClasificacionFrontend(item, opcionId, pregunta);
             ClasificacionRespuesta clasificacion = opcion == null ?
                 clasificacionDesdeJson(item) :
                 null;
@@ -242,21 +245,52 @@ public class VocabularioBApiServlet extends HttpServlet {
         return evaluado;
     }
 
-    PruebaVocabulario buscarPruebaActiva() {
-        return XPersistence.getManager()
+    PruebaVocabulario buscarPruebaPublica(HttpServletRequest request) {
+        String id = optionalParameter(request, "idPrueba", "pruebaId");
+        if (id != null) {
+            return buscarPrueba(id);
+        }
+
+        String codigo = optionalParameter(request, "codigo", "codigoPrueba");
+        if (codigo != null) {
+            return buscarPruebaPorCodigo(codigo);
+        }
+
+        return buscarPruebaActivaUnica();
+    }
+
+    PruebaVocabulario buscarPruebaActivaUnica() {
+        List<PruebaVocabulario> pruebas = XPersistence.getManager()
             .createQuery(
                 "from PruebaVocabulario p where p.estadoPrueba = :estado order by p.fechaCreacion desc",
                 PruebaVocabulario.class)
             .setParameter("estado", EstadoPrueba.ACTIVA)
-            .setMaxResults(1)
-            .getResultList()
-            .stream()
-            .findFirst()
-            .orElse(null);
+            .setMaxResults(2)
+            .getResultList();
+        if (pruebas.size() > 1) {
+            throw new ApiException(
+                HttpServletResponse.SC_CONFLICT,
+                "Hay mas de una prueba activa; indique idPrueba o codigo");
+        }
+        return pruebas.isEmpty() ? null : pruebas.get(0);
     }
 
     PruebaVocabulario buscarPrueba(String id) {
         PruebaVocabulario prueba = XPersistence.getManager().find(PruebaVocabulario.class, id);
+        if (prueba == null) {
+            throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe la prueba indicada");
+        }
+        return prueba;
+    }
+
+    PruebaVocabulario buscarPruebaPorCodigo(String codigo) {
+        PruebaVocabulario prueba = XPersistence.getManager()
+            .createQuery("from PruebaVocabulario p where p.codigo = :codigo", PruebaVocabulario.class)
+            .setParameter("codigo", codigo)
+            .getResultList()
+            .stream()
+            .findFirst()
+            .orElse(null);
         if (prueba == null) {
             throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe la prueba indicada");
         }
@@ -335,6 +369,7 @@ public class VocabularioBApiServlet extends HttpServlet {
         json.put("descripcion", prueba.getDescripcion());
         json.put("instrucciones", prueba.getDescripcion());
         json.put("tiempoLimiteMinutos", prueba.getTiempoLimiteMinutos());
+        json.put("permiteNoSe", prueba.isPermiteNoSe());
         json.set("preguntas", preguntasJson(prueba));
         return json;
     }
@@ -355,7 +390,9 @@ public class VocabularioBApiServlet extends HttpServlet {
             preguntaJson.put("idPregunta", pregunta.getId());
             preguntaJson.put("numero", pregunta.getNumero());
             preguntaJson.put("enunciado", pregunta.getEnunciado());
+            preguntaJson.put("puntaje", pregunta.getPuntaje());
             preguntaJson.put("ejemplo", pregunta.isEjemplo());
+            preguntaJson.put("puntuable", pregunta.isPuntuable());
             preguntaJson.set("opciones", opcionesJson(pregunta));
             preguntasJson.add(preguntaJson);
         }
@@ -399,6 +436,7 @@ public class VocabularioBApiServlet extends HttpServlet {
         json.put("incorrectas", resultado.getCantidadIncorrectas());
         json.put("noSe", resultado.getCantidadNoSe());
         json.put("omitidas", resultado.getCantidadOmitidas());
+        json.put("interpretacion", resultado.getInterpretacion());
         json.put("fechaCalculo", format(resultado.getFechaCalculo()));
         return json;
     }
@@ -411,11 +449,16 @@ public class VocabularioBApiServlet extends HttpServlet {
         return parseClasificacion(value);
     }
 
-    void validarClasificacionFrontend(JsonNode item, String opcionId) {
+    void validarClasificacionFrontend(JsonNode item, String opcionId, PreguntaVocabulario pregunta) {
         String value = optionalText(item, "clasificacionRespuesta", "clasificacion");
         if (value == null) return;
 
         ClasificacionRespuesta clasificacion = parseClasificacion(value);
+        if (ClasificacionRespuesta.NO_SE.equals(clasificacion) &&
+            !pregunta.getPrueba().isPermiteNoSe()) {
+
+            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "La prueba no permite respuestas NO_SE");
+        }
         if (ClasificacionRespuesta.CORRECTA.equals(clasificacion) ||
             ClasificacionRespuesta.INCORRECTA.equals(clasificacion)) {
 
@@ -517,6 +560,16 @@ public class VocabularioBApiServlet extends HttpServlet {
             JsonNode value = node.path(name);
             if (!value.isMissingNode() && !value.isNull() && !value.asText().isBlank()) {
                 return value.asText();
+            }
+        }
+        return null;
+    }
+
+    String optionalParameter(HttpServletRequest request, String... names) {
+        for (String name : names) {
+            String value = request.getParameter(name);
+            if (value != null && !value.isBlank()) {
+                return value;
             }
         }
         return null;

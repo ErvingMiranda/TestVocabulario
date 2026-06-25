@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Context>
+
+	<JarScanner scanClassPath="false" />
+	<CookieProcessor sameSiteCookies="lax" />
+
+	<Resource name="jdbc/TestVocabularioDS" auth="Container" type="javax.sql.DataSource"
+	          maxTotal="20" maxIdle="5" maxWaitMillis="10000"
+	          username="${testvocabulario.db.user}" password="${testvocabulario.db.password}"
+	          driverClassName="org.postgresql.Driver"
+	          url="${testvocabulario.db.url}"/>
+
+</Context>

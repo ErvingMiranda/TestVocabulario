@@ -19,7 +19,7 @@ import lombok.*;
 @Tab(properties="prueba.nombre, numero, enunciado, ejemplo, puntuable, activa")
 public class PreguntaVocabulario extends Identifiable {
 
-    @OneToMany(mappedBy="pregunta")
+    @OneToMany(mappedBy="pregunta", cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderBy("letra")
     @ListProperties("letra, texto, correcta")
     Collection<OpcionRespuesta> opciones;

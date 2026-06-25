@@ -13,7 +13,7 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
-@View(members = "prueba; puntajeMinimo, puntajeMaximo; notaCalculada")
+@View(members = "prueba; puntajeMinimo, puntajeMaximo; notaCalculada; interpretacion")
 public class RangoBaremacion extends Identifiable {
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
@@ -31,6 +31,9 @@ public class RangoBaremacion extends Identifiable {
     @Column(precision=6, scale=2, nullable=false)
     @DecimalMin("0.00") @Required
     BigDecimal notaCalculada;
+
+    @Stereotype("MEMO")
+    String interpretacion;
 
     @Hidden
     @AssertTrue(message="El puntaje minimo no puede ser mayor que el puntaje maximo")

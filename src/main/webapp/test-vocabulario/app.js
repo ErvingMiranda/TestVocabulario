@@ -31,6 +31,7 @@
         timer: document.getElementById("timer"),
         form: document.getElementById("evaluado-form"),
         instructionsContent: document.getElementById("instructions-content"),
+        noSeRule: document.getElementById("no-se-rule"),
         beginTest: document.getElementById("begin-test"),
         questionPosition: document.getElementById("question-position"),
         questionTitle: document.getElementById("question-title"),
@@ -164,6 +165,9 @@
             "Lee cada pregunta y selecciona la opción que consideres correcta.";
 
         elements.instructionsContent.textContent = instrucciones;
+        if (elements.noSeRule) {
+            elements.noSeRule.hidden = !permiteNoSe();
+        }
     }
 
     function mostrarPrueba() {
@@ -199,7 +203,9 @@
         (pregunta.opciones || []).forEach(function (opcion) {
             opciones.appendChild(crearOpcion(pregunta, opcion, respuesta));
         });
-        opciones.appendChild(crearOpcionNoSe(pregunta, respuesta));
+        if (permiteNoSe()) {
+            opciones.appendChild(crearOpcionNoSe(pregunta, respuesta));
+        }
 
         elements.questionContainer.appendChild(opciones);
         actualizarNavegacion();
@@ -627,6 +633,10 @@
 
     function preguntaActual() {
         return state.preguntas[state.indiceActual];
+    }
+
+    function permiteNoSe() {
+        return !state.prueba || state.prueba.permiteNoSe !== false;
     }
 
     function valor(id) {

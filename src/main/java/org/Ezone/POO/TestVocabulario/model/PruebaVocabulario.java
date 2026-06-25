@@ -16,21 +16,21 @@ import lombok.*;
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="codigo"))
 @Getter @Setter
 @View(members =
-    "ConfiguracionGeneral { codigo; nombre; descripcion; estadoPrueba; psicologo; tiempoLimiteMinutos; fechaCreacion };" +
+    "ConfiguracionGeneral { codigo; nombre; descripcion; estadoPrueba; psicologo; tiempoLimiteMinutos; permiteNoSe; fechaCreacion };" +
     "Preguntas { preguntas };" +
     "Baremacion { rangosBaremacion }"
 )
-@Tab(properties="codigo, nombre, estadoPrueba, psicologo.nombres, psicologo.apellidos, tiempoLimiteMinutos, fechaCreacion")
+@Tab(properties="codigo, nombre, estadoPrueba, psicologo.nombres, psicologo.apellidos, tiempoLimiteMinutos, permiteNoSe, fechaCreacion")
 public class PruebaVocabulario extends Identifiable {
 
-    @OneToMany(mappedBy="prueba")
+    @OneToMany(mappedBy="prueba", cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderBy("numero")
-    @ListProperties("numero, enunciado, ejemplo, puntuable, activa")
+    @ListProperties("numero, enunciado, puntaje, ejemplo, puntuable, activa")
     Collection<PreguntaVocabulario> preguntas;
 
-    @OneToMany(mappedBy="prueba")
+    @OneToMany(mappedBy="prueba", cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderBy("puntajeMinimo")
-    @ListProperties("puntajeMinimo, puntajeMaximo, notaCalculada")
+    @ListProperties("puntajeMinimo, puntajeMaximo, notaCalculada, interpretacion")
     Collection<RangoBaremacion> rangosBaremacion;
 
     @Column(length=30, nullable=false) @Required
@@ -54,6 +54,9 @@ public class PruebaVocabulario extends Identifiable {
 
     @Min(1) @Required
     int tiempoLimiteMinutos = 6;
+
+    @Required
+    boolean permiteNoSe = true;
 
     LocalDate fechaCreacion = LocalDate.now();
 

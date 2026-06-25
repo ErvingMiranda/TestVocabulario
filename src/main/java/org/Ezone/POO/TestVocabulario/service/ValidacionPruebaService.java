@@ -64,27 +64,22 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
     }
 
     void validarPreguntas(PruebaVocabulario prueba) {
+        Set<Integer> numeros = new HashSet<>();
         for (PreguntaVocabulario pregunta : preguntas(prueba)) {
+            if (!pregunta.isActiva()) continue;
+
             validarPregunta(pregunta);
+            if (!numeros.add(pregunta.getNumero())) {
+                throw new ValidacionPruebaException(
+                    "No puede haber preguntas activas con el mismo numero");
+            }
             if (!puntua(pregunta)) continue;
 
-            int totalOpciones = contarOpciones(pregunta);
-            int totalCorrectas = contarOpcionesCorrectas(pregunta);
-            if (totalOpciones < 2) {
-                throw new ValidacionPruebaException(
-                    "Cada pregunta puntuable debe tener al menos dos opciones");
-            }
-            if (totalCorrectas != 1) {
-                throw new ValidacionPruebaException(
-                    "Cada pregunta puntuable debe tener exactamente una opcion correcta");
-            }
+            validarOpciones(opciones(pregunta));
         }
     }
 
     void validarPregunta(PreguntaVocabulario pregunta) {
-        if (!pregunta.isActiva()) {
-            throw new ValidacionPruebaException("La prueba no puede tener preguntas inactivas");
-        }
         if (pregunta.getNumero() <= 0) {
             throw new ValidacionPruebaException("El numero de pregunta debe ser mayor que cero");
         }
@@ -107,26 +102,47 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
             .getResultList();
     }
 
-    int contarOpciones(PreguntaVocabulario pregunta) {
-        Long total = XPersistence.getManager()
-            .createQuery("select count(o) from OpcionRespuesta o where o.pregunta = :pregunta", Long.class)
+    List<OpcionRespuesta> opciones(PreguntaVocabulario pregunta) {
+        return XPersistence.getManager()
+            .createQuery("from OpcionRespuesta o where o.pregunta = :pregunta", OpcionRespuesta.class)
             .setParameter("pregunta", pregunta)
-            .getSingleResult();
-        return total.intValue();
+            .getResultList();
     }
 
-    int contarOpcionesCorrectas(PreguntaVocabulario pregunta) {
-        Long total = XPersistence.getManager()
-            .createQuery("select count(o) from OpcionRespuesta o where o.pregunta = :pregunta and o.correcta = true", Long.class)
-            .setParameter("pregunta", pregunta)
-            .getSingleResult();
-        return total.intValue();
+    void validarOpciones(List<OpcionRespuesta> opciones) {
+        if (opciones.size() < 2) {
+            throw new ValidacionPruebaException(
+                "Cada pregunta puntuable debe tener al menos dos opciones");
+        }
+
+        int totalCorrectas = 0;
+        Set<LetraOpcion> letras = new HashSet<>();
+        for (OpcionRespuesta opcion : opciones) {
+            if (opcion.getLetra() == null) {
+                throw new ValidacionPruebaException("Cada opcion debe tener letra");
+            }
+            if (!letras.add(opcion.getLetra())) {
+                throw new ValidacionPruebaException(
+                    "No puede haber opciones con la misma letra en una pregunta");
+            }
+            if (opcion.getTexto() == null || opcion.getTexto().isBlank()) {
+                throw new ValidacionPruebaException("Cada opcion debe tener texto");
+            }
+            if (opcion.isCorrecta()) totalCorrectas++;
+        }
+
+        if (totalCorrectas != 1) {
+            throw new ValidacionPruebaException(
+                "Cada pregunta puntuable debe tener exactamente una opcion correcta");
+        }
     }
 
     void validarRangosBaremacion(PruebaVocabulario prueba) {
         List<RangoBaremacion> rangos = rangosBaremacion(prueba);
         rangos.sort(Comparator.comparingInt(RangoBaremacion::getPuntajeMinimo));
 
+        int puntajeMaximoPosible = puntajeMaximoPosible(prueba);
+        int coberturaHasta = -1;
         RangoBaremacion anterior = null;
         for (RangoBaremacion rango : rangos) {
             if (rango.getPuntajeMinimo() > rango.getPuntajeMaximo()) {
@@ -137,7 +153,18 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
                 throw new ValidacionPruebaException(
                     "No puede haber rangos de baremacion solapados para la misma prueba");
             }
+            if (rango.getPuntajeMinimo() > coberturaHasta + 1) {
+                throw new ValidacionPruebaException(
+                    "Los rangos de baremacion deben cubrir todos los puntajes desde 0 hasta " +
+                        puntajeMaximoPosible);
+            }
+            coberturaHasta = Math.max(coberturaHasta, rango.getPuntajeMaximo());
             anterior = rango;
+        }
+        if (coberturaHasta < puntajeMaximoPosible) {
+            throw new ValidacionPruebaException(
+                "Los rangos de baremacion deben cubrir todos los puntajes desde 0 hasta " +
+                    puntajeMaximoPosible);
         }
     }
 
@@ -146,5 +173,16 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
             .createQuery("from RangoBaremacion r where r.prueba = :prueba", RangoBaremacion.class)
             .setParameter("prueba", prueba)
             .getResultList();
+    }
+
+    int puntajeMaximoPosible(PruebaVocabulario prueba) {
+        Number total = XPersistence.getManager()
+            .createQuery(
+                "select sum(p.puntaje) from PreguntaVocabulario p " +
+                    "where p.prueba = :prueba and p.activa = true and p.ejemplo = false and p.puntuable = true",
+                Number.class)
+            .setParameter("prueba", prueba)
+            .getSingleResult();
+        return total == null ? 0 : total.intValue();
     }
 }

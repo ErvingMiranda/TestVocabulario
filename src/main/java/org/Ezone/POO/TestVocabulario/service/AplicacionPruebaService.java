@@ -161,6 +161,11 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         if (!pregunta.getPrueba().equals(intento.getPrueba())) {
             throw new AplicacionPruebaException("La pregunta no pertenece a la prueba del intento");
         }
+        if (ClasificacionRespuesta.NO_SE.equals(clasificacionRespuesta) &&
+            !pregunta.getPrueba().isPermiteNoSe()) {
+
+            throw new AplicacionPruebaException("La prueba no permite respuestas NO_SE");
+        }
         if (opcion == null) {
             if (ClasificacionRespuesta.CORRECTA.equals(clasificacionRespuesta) ||
                 ClasificacionRespuesta.INCORRECTA.equals(clasificacionRespuesta)) {
