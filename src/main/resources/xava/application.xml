@@ -19,5 +19,11 @@
 		<controller name="Print"/>
 	</module>		
 	-->
-	
+
+	<module name="IntentoPrueba">
+		<model name="IntentoPrueba"/>
+		<controller name="Typical"/>
+		<controller name="IntentoPruebaController"/>
+	</module>
+
 </application>

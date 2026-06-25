@@ -32,5 +32,15 @@ https://github.com/openxava/openxava/blob/master/openxavatest/src/main/resources
     	</action>
 	</controller>    
     -->
+
+    <controller name="IntentoPruebaController">
+        <extends controller="Typical"/>
+        <action name="finalizarYCalcular"
+                class="org.Ezone.POO.TestVocabulario.actions.FinalizarYCalcularAction"
+                mode="detail"
+                confirm="true"
+                label="Finalizar y Calcular Nota">
+        </action>
+    </controller>
     
 </controllers>
