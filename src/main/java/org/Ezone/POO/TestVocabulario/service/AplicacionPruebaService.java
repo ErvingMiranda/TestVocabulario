@@ -54,6 +54,7 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         if (!EstadoIntento.EN_PROGRESO.equals(intento.getEstadoIntento())) {
             throw new AplicacionPruebaException("Solo se puede finalizar una prueba en progreso");
         }
+        validarConfiguracionPrueba(intento.getPrueba());
         registrarOmisiones(intento);
         intento.setEstadoIntento(EstadoIntento.FINALIZADO);
         intento.setFechaFin(LocalDateTime.now());
@@ -79,10 +80,11 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
     RespuestaEvaluado buscarRespuesta(IntentoPrueba intento, PreguntaVocabulario pregunta) {
         return XPersistence.getManager()
             .createQuery(
-                "from RespuestaEvaluado r where r.intento = :intento and r.pregunta = :pregunta",
+                "from RespuestaEvaluado r where r.intento = :intento and r.pregunta = :pregunta order by r.fechaRespuesta desc",
                 RespuestaEvaluado.class)
             .setParameter("intento", intento)
             .setParameter("pregunta", pregunta)
+            .setMaxResults(1)
             .getResultList()
             .stream()
             .findFirst()
@@ -134,6 +136,16 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         }
         if (intento.getPrueba() == null || !intento.getPrueba().activa()) {
             throw new AplicacionPruebaException("La prueba no esta activa");
+        }
+        validarConfiguracionPrueba(intento.getPrueba());
+    }
+
+    void validarConfiguracionPrueba(PruebaVocabulario prueba) {
+        try {
+            new ValidacionPruebaService().validarParaActivar(prueba);
+        }
+        catch (ValidacionPruebaException ex) {
+            throw new AplicacionPruebaException(ex.getMessage());
         }
     }
 

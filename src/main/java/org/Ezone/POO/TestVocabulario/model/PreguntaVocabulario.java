@@ -28,7 +28,7 @@ public class PreguntaVocabulario extends Identifiable {
     int puntaje = 1;
 
     @Required
-    boolean ejemplo;
+    boolean ejemplo = false;
 
     @Required
     boolean puntuable = true;

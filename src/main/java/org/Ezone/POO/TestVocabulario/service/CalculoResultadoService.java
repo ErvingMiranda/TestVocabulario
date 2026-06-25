@@ -14,6 +14,7 @@ public class CalculoResultadoService implements ICalculoResultadoService {
     @Override
     public ResultadoPrueba calcularResultado(IntentoPrueba intento) {
         validarIntento(intento);
+        new ValidacionPruebaService().validarParaActivar(intento.getPrueba());
         clasificarRespuestas(intento);
 
         int totalPreguntas = contarPreguntasPuntuables(intento.getPrueba());
@@ -108,7 +109,7 @@ public class CalculoResultadoService implements ICalculoResultadoService {
     int contarPorClasificacion(IntentoPrueba intento, ClasificacionRespuesta clasificacion) {
         Long total = XPersistence.getManager()
             .createQuery(
-                "select count(r) from RespuestaEvaluado r " +
+                "select count(distinct r.pregunta) from RespuestaEvaluado r " +
                     "where r.intento = :intento " +
                     "and r.pregunta.activa = true " +
                     "and r.pregunta.ejemplo = false " +
