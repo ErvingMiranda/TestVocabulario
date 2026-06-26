@@ -72,13 +72,13 @@
             <h2>Instrucciones</h2>
             <div id="instructions-content" class="instructions"></div>
             <ul class="rules">
-                <li>El cronómetro ya está corriendo y no se puede pausar.</li>
+                <li>El cronómetro empezará cuando presiones “Comenzar prueba”.</li>
                 <li>Puedes avanzar, retroceder y corregir respuestas anteriores.</li>
                 <li id="no-se-rule">Si no conoces una respuesta, marca “No sé”.</li>
                 <li>Las preguntas sin responder se enviarán como omitidas al finalizar.</li>
             </ul>
             <div class="actions">
-                <button id="begin-test" type="button" class="primary">Comenzar preguntas</button>
+                <button id="begin-test" type="button" class="primary">Comenzar prueba</button>
             </div>
         </section>
 
@@ -88,7 +88,10 @@
                     <p id="question-position" class="eyebrow">Pregunta</p>
                     <h2 id="question-title">Pregunta</h2>
                 </div>
-                <p id="answered-count" class="pill">0 respondidas</p>
+                <div class="test-status-actions">
+                    <p id="answered-count" class="pill">0 respondidas</p>
+                    <button id="finish-test" type="button" class="primary danger">Finalizar</button>
+                </div>
             </div>
             <div class="progress-track" aria-hidden="true">
                 <div id="progress-bar" class="progress-bar"></div>
@@ -102,7 +105,6 @@
                 <button id="previous-question" type="button" class="secondary">Anterior</button>
                 <button id="clear-answer" type="button" class="ghost">Dejar en blanco</button>
                 <button id="next-question" type="button" class="secondary">Siguiente</button>
-                <button id="finish-test" type="button" class="primary danger">Finalizar</button>
             </div>
         </section>
 

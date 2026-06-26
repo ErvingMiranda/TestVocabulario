@@ -10,33 +10,38 @@
 	Institucion are intentionally not exposed as primary menu modules.
 	-->
 
-	<module name="PruebaVocabulario">
-		<model name="PruebaVocabulario"/>
-		<controller name="Typical"/>
-	</module>
-
-	<module name="PreguntaVocabulario">
-		<model name="PreguntaVocabulario"/>
-		<controller name="Typical"/>
-	</module>
-
-	<module name="IntentoPrueba">
-		<model name="IntentoPrueba"/>
-		<controller name="IntentoPruebaController"/>
-	</module>
-
-	<module name="ResultadoPrueba">
-		<model name="ResultadoPrueba"/>
+	<module name="Psicologo" folder="Psic&#243;logos">
+		<model name="Psicologo"/>
 		<controller name="Consulta"/>
 	</module>
 
-	<module name="Evaluado">
+	<module name="RegistroPsicologo" folder="Psic&#243;logos">
+		<model name="Psicologo"/>
+		<controller name="RegistroPsicologoController"/>
+	</module>
+
+	<module name="Evaluado" folder="Evaluados">
 		<model name="Evaluado"/>
 		<controller name="Typical"/>
 	</module>
 
-	<module name="Psicologo">
-		<model name="Psicologo"/>
+	<module name="IntentoPrueba" folder="Aplicaciones">
+		<model name="IntentoPrueba"/>
+		<controller name="IntentoPruebaController"/>
+	</module>
+
+	<module name="ResultadoPrueba" folder="Aplicaciones">
+		<model name="ResultadoPrueba"/>
+		<controller name="Consulta"/>
+	</module>
+
+	<module name="PruebaVocabulario" folder="Configuraci&#243;n de pruebas">
+		<model name="PruebaVocabulario"/>
+		<controller name="Typical"/>
+	</module>
+
+	<module name="PreguntaVocabulario" folder="Configuraci&#243;n de pruebas">
+		<model name="PreguntaVocabulario"/>
 		<controller name="Typical"/>
 	</module>
 

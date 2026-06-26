@@ -16,6 +16,7 @@ public class AccesoSistema extends Identifiable {
     @Column(length=50, nullable=false) @Required
     String nombreUsuario;
 
+    @Hidden
     @Column(length=120, nullable=false) @Required
     String hashContrasena;
 

@@ -49,5 +49,22 @@ https://github.com/openxava/openxava/blob/master/openxavatest/src/main/resources
                 label="Finalizar y Calcular Nota">
         </action>
     </controller>
+
+    <controller name="RegistroPsicologoController">
+        <action name="new"
+                hidden="true"
+                on-init="true"
+                class="org.openxava.actions.NewAction">
+            <set property="restoreModel" value="true"/>
+        </action>
+        <action name="saveNew"
+                by-default="almost-always"
+                class="org.Ezone.POO.TestVocabulario.actions.GuardarRegistroPsicologoAction"
+                label="Guardar psicólogo">
+        </action>
+        <action name="cancel"
+                class="org.openxava.actions.CancelAction">
+        </action>
+    </controller>
     
 </controllers>

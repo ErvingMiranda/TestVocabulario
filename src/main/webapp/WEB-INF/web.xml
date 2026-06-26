@@ -19,6 +19,10 @@
     <servlet-name>VocabularioBApi</servlet-name>
     <servlet-class>org.Ezone.POO.TestVocabulario.api.VocabularioBApiServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>AuthPsicologoApi</servlet-name>
+    <servlet-class>org.Ezone.POO.TestVocabulario.api.AuthPsicologoServlet</servlet-class>
+  </servlet>
 
   <servlet-mapping>
     <servlet-name>jsp</servlet-name>
@@ -27,6 +31,10 @@
   <servlet-mapping>
     <servlet-name>VocabularioBApi</servlet-name>
     <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>AuthPsicologoApi</servlet-name>
+    <url-pattern>/api/auth/psicologo/*</url-pattern>
   </servlet-mapping>
   
   <!-- To be compliant with OWASP -->

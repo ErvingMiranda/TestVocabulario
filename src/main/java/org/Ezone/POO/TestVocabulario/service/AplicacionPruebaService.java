@@ -1,6 +1,7 @@
 package org.Ezone.POO.TestVocabulario.service;
 
 import java.time.*;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -30,8 +31,13 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         OpcionRespuesta opcion, ClasificacionRespuesta clasificacionRespuesta) {
 
         ClasificacionRespuesta clasificacion = resolverClasificacion(opcion, clasificacionRespuesta);
+        intento = bloquearIntento(intento);
         validarRespuesta(intento, pregunta, opcion, clasificacion);
         RespuestaEvaluado respuesta = buscarRespuesta(intento, pregunta);
+        if (respuesta != null && ClasificacionRespuesta.OMITIDA.equals(clasificacion)) {
+            intento.setNumeroRespuestas(contarRespuestas(intento));
+            return respuesta;
+        }
         if (respuesta == null) {
             respuesta = new RespuestaEvaluado();
             respuesta.setIntento(intento);
@@ -50,6 +56,12 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
     public IntentoPrueba finalizarPrueba(IntentoPrueba intento) {
         if (intento == null) {
             throw new AplicacionPruebaException("El intento es requerido");
+        }
+        intento = bloquearIntento(intento);
+        if (EstadoIntento.FINALIZADO.equals(intento.getEstadoIntento()) ||
+            EstadoIntento.CALIFICADO.equals(intento.getEstadoIntento())) {
+
+            return intento;
         }
         if (!EstadoIntento.EN_PROGRESO.equals(intento.getEstadoIntento())) {
             throw new AplicacionPruebaException("Solo se puede finalizar una prueba en progreso");
@@ -77,6 +89,28 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
         }
     }
 
+    IntentoPrueba bloquearIntento(IntentoPrueba intento) {
+        if (intento == null) {
+            throw new AplicacionPruebaException("El intento es requerido");
+        }
+
+        EntityManager manager = XPersistence.getManager();
+        IntentoPrueba intentoGestionado = intento;
+        if (!manager.contains(intento)) {
+            if (intento.getId() == null) {
+                throw new AplicacionPruebaException("El intento debe estar persistido");
+            }
+            intentoGestionado = manager.find(IntentoPrueba.class, intento.getId(), LockModeType.PESSIMISTIC_WRITE);
+            if (intentoGestionado == null) {
+                throw new AplicacionPruebaException("No existe el intento indicado");
+            }
+        }
+        else {
+            manager.lock(intentoGestionado, LockModeType.PESSIMISTIC_WRITE);
+        }
+        return intentoGestionado;
+    }
+
     RespuestaEvaluado buscarRespuesta(IntentoPrueba intento, PreguntaVocabulario pregunta) {
         return XPersistence.getManager()
             .createQuery(
@@ -100,17 +134,39 @@ public class AplicacionPruebaService implements IAplicacionPruebaService {
     }
 
     void registrarOmisiones(IntentoPrueba intento) {
+        Map<String, RespuestaEvaluado> respuestasPorPregunta = respuestasPorPregunta(intento);
+        LocalDateTime fechaOmisiones = LocalDateTime.now();
+
         for (PreguntaVocabulario pregunta : preguntasActivas(intento.getPrueba())) {
-            if (buscarRespuesta(intento, pregunta) == null) {
+            if (!respuestasPorPregunta.containsKey(pregunta.getId())) {
                 RespuestaEvaluado respuesta = new RespuestaEvaluado();
                 respuesta.setIntento(intento);
                 respuesta.setPregunta(pregunta);
                 respuesta.setClasificacionRespuesta(ClasificacionRespuesta.OMITIDA);
                 respuesta.setCorrecta(false);
-                respuesta.setFechaRespuesta(LocalDateTime.now());
+                respuesta.setFechaRespuesta(fechaOmisiones);
                 XPersistence.getManager().persist(respuesta);
+                respuestasPorPregunta.put(pregunta.getId(), respuesta);
             }
         }
+    }
+
+    Map<String, RespuestaEvaluado> respuestasPorPregunta(IntentoPrueba intento) {
+        List<RespuestaEvaluado> respuestas = XPersistence.getManager()
+            .createQuery(
+                "from RespuestaEvaluado r where r.intento = :intento order by r.fechaRespuesta desc",
+                RespuestaEvaluado.class)
+            .setParameter("intento", intento)
+            .getResultList();
+
+        Map<String, RespuestaEvaluado> respuestasPorPregunta = new HashMap<>();
+        for (RespuestaEvaluado respuesta : respuestas) {
+            PreguntaVocabulario pregunta = respuesta.getPregunta();
+            if (pregunta != null && pregunta.getId() != null) {
+                respuestasPorPregunta.putIfAbsent(pregunta.getId(), respuesta);
+            }
+        }
+        return respuestasPorPregunta;
     }
 
     java.util.List<PreguntaVocabulario> preguntasActivas(PruebaVocabulario prueba) {

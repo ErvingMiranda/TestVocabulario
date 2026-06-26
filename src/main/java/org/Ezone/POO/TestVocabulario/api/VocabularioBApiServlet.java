@@ -71,6 +71,10 @@ public class VocabularioBApiServlet extends HttpServlet {
                 registrarRespuestas(parts[1], request, response);
                 return;
             }
+            if (parts.length == 3 && "intentos".equals(parts[0]) && "comenzar".equals(parts[2])) {
+                comenzarIntento(parts[1], response);
+                return;
+            }
             if (parts.length == 3 && "intentos".equals(parts[0]) && "finalizar".equals(parts[2])) {
                 finalizarIntento(parts[1], response);
                 return;
@@ -129,8 +133,7 @@ public class VocabularioBApiServlet extends HttpServlet {
         intento.setCodigoAplicacion(generarCodigoAplicacion());
         intento.setPrueba(prueba);
         intento.setEvaluado(evaluado);
-        intento.setEstadoIntento(EstadoIntento.EN_PROGRESO);
-        intento.setFechaInicio(LocalDateTime.now());
+        intento.setEstadoIntento(EstadoIntento.PENDIENTE);
         intento.setNumeroRespuestas(0);
 
         EntityManager manager = XPersistence.getManager();
@@ -145,18 +148,54 @@ public class VocabularioBApiServlet extends HttpServlet {
         sendJson(response, HttpServletResponse.SC_CREATED, result);
     }
 
+    void comenzarIntento(String idIntento, HttpServletResponse response) throws IOException {
+        IntentoPrueba intento = buscarIntento(idIntento);
+        EstadoIntento estado = intento.getEstadoIntento();
+
+        if (EstadoIntento.PENDIENTE.equals(estado)) {
+            if (intento.getFechaInicio() == null) {
+                intento.setFechaInicio(LocalDateTime.now());
+            }
+            intento.setEstadoIntento(EstadoIntento.EN_PROGRESO);
+        }
+        else if (EstadoIntento.EN_PROGRESO.equals(estado)) {
+            if (intento.getFechaInicio() == null) {
+                intento.setFechaInicio(LocalDateTime.now());
+            }
+        }
+        else if (EstadoIntento.FINALIZADO.equals(estado) ||
+            EstadoIntento.CALIFICADO.equals(estado) ||
+            EstadoIntento.ANULADO.equals(estado)) {
+
+            throw new ApiException(
+                HttpServletResponse.SC_CONFLICT,
+                "El intento ya no puede continuar porque esta en estado " + estado.name());
+        }
+        else {
+            throw new ApiException(HttpServletResponse.SC_CONFLICT, "El intento no puede comenzar en su estado actual");
+        }
+
+        ObjectNode result = intentoJson(intento);
+        XPersistence.commit();
+        sendJson(response, HttpServletResponse.SC_OK, result);
+    }
+
     void registrarRespuestas(String idIntento, HttpServletRequest request, HttpServletResponse response) throws IOException {
         IntentoPrueba intento = buscarIntento(idIntento);
+        if (intentoCerrado(intento)) {
+            responderIntentoCerrado(intento, response);
+            return;
+        }
         validarIntentoEnProgreso(intento);
 
         if (tiempoAgotado(intento)) {
             ResultadoPrueba resultado = finalizarYCalcular(intento);
-            XPersistence.commit();
 
             ObjectNode result = mapper.createObjectNode();
             result.put("estado", "TIEMPO_AGOTADO");
             result.put("mensaje", "El tiempo limite de la prueba ya fue alcanzado");
             result.set("resultado", resultadoJson(resultado));
+            XPersistence.commit();
             sendJson(response, HttpServletResponse.SC_CONFLICT, result);
             return;
         }
@@ -197,24 +236,28 @@ public class VocabularioBApiServlet extends HttpServlet {
 
     void finalizarIntento(String idIntento, HttpServletResponse response) throws IOException {
         IntentoPrueba intento = buscarIntento(idIntento);
-        if (EstadoIntento.CALIFICADO.equals(intento.getEstadoIntento())) {
-            ResultadoPrueba resultado = buscarResultado(intento);
-            if (resultado == null) {
-                throw new CalculoResultadoException("El intento esta calificado, pero no tiene resultado guardado");
-            }
-            sendJson(response, HttpServletResponse.SC_OK, resultadoJson(resultado));
-            return;
-        }
-
-        validarIntentoEnProgreso(intento);
         ResultadoPrueba resultado = finalizarYCalcular(intento);
+        ObjectNode result = resultadoJson(resultado);
         XPersistence.commit();
-        sendJson(response, HttpServletResponse.SC_OK, resultadoJson(resultado));
+        sendJson(response, HttpServletResponse.SC_OK, result);
     }
 
     ResultadoPrueba finalizarYCalcular(IntentoPrueba intento) {
         IAplicacionPruebaService aplicacionService = new AplicacionPruebaService();
         ICalculoResultadoService calculoService = new CalculoResultadoService();
+
+        if (EstadoIntento.CALIFICADO.equals(intento.getEstadoIntento())) {
+            ResultadoPrueba resultado = buscarResultado(intento);
+            if (resultado == null) {
+                throw new CalculoResultadoException("El intento esta calificado, pero no tiene resultado guardado");
+            }
+            return resultado;
+        }
+        if (EstadoIntento.FINALIZADO.equals(intento.getEstadoIntento())) {
+            ResultadoPrueba resultado = buscarResultado(intento);
+            return resultado == null ? calculoService.calcularResultado(intento) : resultado;
+        }
+        validarIntentoEnProgreso(intento);
         aplicacionService.finalizarPrueba(intento);
         return calculoService.calcularResultado(intento);
     }
@@ -298,7 +341,8 @@ public class VocabularioBApiServlet extends HttpServlet {
     }
 
     IntentoPrueba buscarIntento(String id) {
-        IntentoPrueba intento = XPersistence.getManager().find(IntentoPrueba.class, id);
+        IntentoPrueba intento = XPersistence.getManager()
+            .find(IntentoPrueba.class, id, LockModeType.PESSIMISTIC_WRITE);
         if (intento == null) {
             throw new ApiException(HttpServletResponse.SC_NOT_FOUND, "No existe el intento indicado");
         }
@@ -346,6 +390,27 @@ public class VocabularioBApiServlet extends HttpServlet {
         }
     }
 
+    boolean intentoCerrado(IntentoPrueba intento) {
+        return EstadoIntento.FINALIZADO.equals(intento.getEstadoIntento()) ||
+            EstadoIntento.CALIFICADO.equals(intento.getEstadoIntento());
+    }
+
+    void responderIntentoCerrado(IntentoPrueba intento, HttpServletResponse response) throws IOException {
+        ObjectNode result = mapper.createObjectNode();
+        result.put("idIntento", intento.getId());
+        result.put("estadoIntento", intento.getEstadoIntento().name());
+        result.put("respuestasRecibidas", 0);
+        result.put("mensaje", "El intento ya esta cerrado; no se registraron cambios.");
+
+        ResultadoPrueba resultado = buscarResultado(intento);
+        if (resultado != null) {
+            result.set("resultado", resultadoJson(resultado));
+        }
+
+        XPersistence.commit();
+        sendJson(response, HttpServletResponse.SC_OK, result);
+    }
+
     void validarPertenencia(IntentoPrueba intento, PreguntaVocabulario pregunta, OpcionRespuesta opcion) {
         if (!pregunta.getPrueba().equals(intento.getPrueba())) {
             throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, "La pregunta no pertenece a la prueba del intento");
@@ -378,6 +443,7 @@ public class VocabularioBApiServlet extends HttpServlet {
         ObjectNode json = mapper.createObjectNode();
         json.put("idIntento", intento.getId());
         json.put("codigoAplicacion", intento.getCodigoAplicacion());
+        json.put("estadoIntento", intento.getEstadoIntento().name());
         json.put("fechaInicio", format(intento.getFechaInicio()));
         json.put("tiempoLimiteMinutos", intento.getPrueba().getTiempoLimiteMinutos());
         return json;

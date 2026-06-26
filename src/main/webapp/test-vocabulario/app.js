@@ -11,6 +11,7 @@
         indiceActual: 0,
         pantalla: "inicio",
         enviando: false,
+        comenzando: false,
         sincronizando: false,
         timerId: null,
         autosaveId: null,
@@ -56,7 +57,9 @@
     elements.nextQuestion.addEventListener("click", preguntaSiguiente);
     elements.clearAnswer.addEventListener("click", limpiarRespuestaActual);
     elements.finishTest.addEventListener("click", function () {
-        finalizarPrueba("manual");
+        if (window.confirm("¿Seguro que deseas finalizar la prueba? Aún puedes revisar tus respuestas si tienes tiempo disponible.")) {
+            finalizarPrueba("manual");
+        }
     });
     elements.retry.addEventListener("click", iniciarAplicacion);
 
@@ -68,17 +71,19 @@
         var sesion = cargarSesionActiva();
         if (sesion) {
             restaurarSesion(sesion);
+            normalizarSesionRestaurada();
             actualizarResumenPrueba();
-            iniciarTimer();
-            if (tiempoRestanteMs() <= 0) {
-                finalizarPrueba("tiempo");
-                return;
-            }
             mostrarPantalla(state.pantalla === "prueba" ? "test" : "instructions");
             if (state.pantalla === "prueba") {
+                iniciarTimer();
+                if (tiempoRestanteMs() <= 0) {
+                    finalizarPrueba("tiempo");
+                    return;
+                }
                 renderizarPregunta();
             }
             else {
+                elements.timer.hidden = true;
                 renderizarInstrucciones();
             }
             if (Object.keys(state.pendientes).length) {
@@ -122,7 +127,7 @@
             state.intento = {
                 idIntento: respuesta.idIntento,
                 codigoAplicacion: respuesta.codigoAplicacion,
-                fechaInicio: respuesta.fechaInicio,
+                fechaInicio: respuesta.fechaInicio || null,
                 tiempoLimiteMinutos: respuesta.tiempoLimiteMinutos || state.prueba.tiempoLimiteMinutos
             };
             state.preguntas = Array.isArray(respuesta.preguntas) ? respuesta.preguntas : state.preguntas;
@@ -135,7 +140,7 @@
             actualizarResumenPrueba();
             renderizarInstrucciones();
             mostrarPantalla("instructions");
-            iniciarTimer();
+            elements.timer.hidden = true;
         }
         catch (error) {
             mostrarError(error);
@@ -170,11 +175,42 @@
         }
     }
 
-    function mostrarPrueba() {
-        state.pantalla = "prueba";
-        guardarSesionActiva();
-        mostrarPantalla("test");
-        renderizarPregunta();
+    async function mostrarPrueba() {
+        if (state.comenzando || state.pantalla === "prueba") {
+            return;
+        }
+        if (!state.intento || !state.intento.idIntento) {
+            mostrarError(new Error("No hay un intento activo para comenzar la prueba."));
+            return;
+        }
+
+        state.comenzando = true;
+        elements.beginTest.disabled = true;
+        limpiarMensajeSincronizacion();
+
+        try {
+            if (!state.intento.fechaInicio) {
+                var respuesta = await apiPost("intentos/" + encodeURIComponent(state.intento.idIntento) + "/comenzar", null);
+                state.intento.fechaInicio = respuesta.fechaInicio;
+                state.intento.tiempoLimiteMinutos = respuesta.tiempoLimiteMinutos || state.intento.tiempoLimiteMinutos;
+            }
+
+            state.pantalla = "prueba";
+            guardarSesionActiva();
+            mostrarPantalla("test");
+            renderizarPregunta();
+            iniciarTimer();
+        }
+        catch (error) {
+            if (error.status === 409) {
+                descartarSesionActiva();
+            }
+            mostrarError(error);
+        }
+        finally {
+            state.comenzando = false;
+            elements.beginTest.disabled = false;
+        }
     }
 
     function renderizarPregunta() {
@@ -350,7 +386,7 @@
     }
 
     function programarAutosave() {
-        if (!state.intento || state.enviando) return;
+        if (!state.intento || !state.intento.fechaInicio || state.pantalla !== "prueba" || state.enviando) return;
 
         mostrarMensajeSincronizacion("Guardando cambios localmente...");
         window.clearTimeout(state.autosaveId);
@@ -422,6 +458,11 @@
     }
 
     function iniciarTimer() {
+        if (!state.intento || !state.intento.fechaInicio) {
+            elements.timer.hidden = true;
+            return;
+        }
+
         detenerTimer();
         elements.timer.hidden = false;
         actualizarTimer();
@@ -454,7 +495,7 @@
     }
 
     function tiempoRestanteMs() {
-        if (!state.intento) return 0;
+        if (!state.intento || !state.intento.fechaInicio) return 0;
 
         var inicio = Date.parse(state.intento.fechaInicio);
         if (Number.isNaN(inicio)) {
@@ -543,6 +584,15 @@
         localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(sesion));
     }
 
+    function descartarSesionActiva() {
+        localStorage.removeItem(ACTIVE_SESSION_KEY);
+        state.intento = null;
+        state.respuestas = {};
+        state.pendientes = {};
+        state.indiceActual = 0;
+        state.pantalla = "inicio";
+    }
+
     function cargarSesionActiva() {
         try {
             var raw = localStorage.getItem(ACTIVE_SESSION_KEY);
@@ -562,6 +612,14 @@
         state.indiceActual = Math.min(Number(sesion.indiceActual) || 0, Math.max(state.preguntas.length - 1, 0));
         state.pantalla = sesion.pantalla || "instrucciones";
         state.pendientes = sesion.pendientes || {};
+    }
+
+    function normalizarSesionRestaurada() {
+        if (state.pantalla === "prueba" && (!state.intento || !state.intento.fechaInicio)) {
+            state.pantalla = "instrucciones";
+            state.indiceActual = 0;
+            guardarSesionActiva();
+        }
     }
 
     async function apiGet(path) {
@@ -636,7 +694,7 @@
     }
 
     function permiteNoSe() {
-        return !state.prueba || state.prueba.permiteNoSe !== false;
+        return true;
     }
 
     function valor(id) {

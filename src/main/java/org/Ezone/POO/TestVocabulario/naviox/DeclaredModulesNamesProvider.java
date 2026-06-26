@@ -9,12 +9,13 @@ import com.openxava.naviox.impl.*;
 public class DeclaredModulesNamesProvider implements IAllModulesNamesProvider {
 
     private static final Collection<String> MODULES = Collections.unmodifiableList(Arrays.asList(
-        "PruebaVocabulario",
-        "PreguntaVocabulario",
+        "Psicologo",
+        "RegistroPsicologo",
+        "Evaluado",
         "IntentoPrueba",
         "ResultadoPrueba",
-        "Evaluado",
-        "Psicologo"
+        "PruebaVocabulario",
+        "PreguntaVocabulario"
     ));
 
     @Override

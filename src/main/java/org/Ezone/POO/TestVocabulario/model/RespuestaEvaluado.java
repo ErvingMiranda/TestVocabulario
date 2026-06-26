@@ -20,13 +20,13 @@ public class RespuestaEvaluado extends Identifiable {
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
     @JoinColumn(name="intento_id", nullable=false)
     @DescriptionsList(descriptionProperties="codigoAplicacion")
-    @Required
+    @NotNull
     IntentoPrueba intento;
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
     @JoinColumn(name="pregunta_id", nullable=false)
     @DescriptionsList(descriptionProperties="numero, enunciado")
-    @Required
+    @NotNull
     PreguntaVocabulario pregunta;
 
     @ManyToOne(fetch=FetchType.LAZY, optional=true)
@@ -36,10 +36,9 @@ public class RespuestaEvaluado extends Identifiable {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable=false)
-    @NotNull @Required
+    @NotNull
     ClasificacionRespuesta clasificacionRespuesta = ClasificacionRespuesta.OMITIDA;
 
-    @Required
     boolean correcta;
 
     LocalDateTime fechaRespuesta = LocalDateTime.now();
