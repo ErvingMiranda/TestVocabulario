@@ -13,7 +13,11 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
-@View(members = "prueba; puntajeMinimo, puntajeMaximo; notaCalculada; interpretacion")
+@View(members =
+    "Prueba { prueba };" +
+    "RangoPuntaje { puntajeMinimo, puntajeMaximo; notaCalculada };" +
+    "Interpretacion { interpretacion }"
+)
 public class RangoBaremacion extends Identifiable {
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)

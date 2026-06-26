@@ -12,7 +12,10 @@ import lombok.*;
 @Entity
 @Table(uniqueConstraints=@UniqueConstraint(columnNames={"pregunta_id", "letra"}))
 @Getter @Setter
-@View(members = "pregunta; letra; texto; correcta")
+@View(members =
+    "Pregunta { pregunta };" +
+    "Respuesta { letra; texto; correcta }"
+)
 @Tab(properties="pregunta.numero, letra, texto, correcta")
 public class OpcionRespuesta extends Identifiable {
 

@@ -133,10 +133,11 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
 
     void validarRangosBaremacion(PruebaVocabulario prueba) {
         List<RangoBaremacion> rangos = rangosBaremacion(prueba);
+        if (rangos.isEmpty()) {
+            throw new ValidacionPruebaException("La prueba debe tener al menos un rango de baremacion");
+        }
         rangos.sort(Comparator.comparingInt(RangoBaremacion::getPuntajeMinimo));
 
-        int puntajeMaximoPosible = puntajeMaximoPosible(prueba);
-        int coberturaHasta = -1;
         RangoBaremacion anterior = null;
         for (RangoBaremacion rango : rangos) {
             if (rango.getPuntajeMinimo() > rango.getPuntajeMaximo()) {
@@ -147,18 +148,11 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
                 throw new ValidacionPruebaException(
                     "No puede haber rangos de baremacion solapados para la misma prueba");
             }
-            if (rango.getPuntajeMinimo() > coberturaHasta + 1) {
+            if (anterior != null && rango.getPuntajeMinimo() > anterior.getPuntajeMaximo() + 1) {
                 throw new ValidacionPruebaException(
-                    "Los rangos de baremacion deben cubrir todos los puntajes desde 0 hasta " +
-                        puntajeMaximoPosible);
+                    "No puede haber huecos internos entre rangos de baremacion configurados");
             }
-            coberturaHasta = Math.max(coberturaHasta, rango.getPuntajeMaximo());
             anterior = rango;
-        }
-        if (coberturaHasta < puntajeMaximoPosible) {
-            throw new ValidacionPruebaException(
-                "Los rangos de baremacion deben cubrir todos los puntajes desde 0 hasta " +
-                    puntajeMaximoPosible);
         }
     }
 
@@ -169,14 +163,4 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
             .getResultList();
     }
 
-    int puntajeMaximoPosible(PruebaVocabulario prueba) {
-        Number total = XPersistence.getManager()
-            .createQuery(
-                "select sum(p.puntaje) from PreguntaVocabulario p " +
-                    "where p.prueba = :prueba and p.activa = true and p.ejemplo = false and p.puntuable = true",
-                Number.class)
-            .setParameter("prueba", prueba)
-            .getSingleResult();
-        return total == null ? 0 : total.intValue();
-    }
 }

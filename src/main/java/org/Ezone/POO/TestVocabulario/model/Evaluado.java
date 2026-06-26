@@ -9,8 +9,12 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
-@View(members = "nombres, apellidos; correo, telefono; fechaNacimiento; codigoEvaluado, nivelAcademico; institucion")
-@Tab(properties="nombres, apellidos, correo, telefono, nivelAcademico, institucion.nombre")
+@View(members =
+    "DatosPersonales { nombres, apellidos; codigoEvaluado; fechaNacimiento };" +
+    "Contacto { correo, telefono };" +
+    "ContextoAcademico { nivelAcademico; institucion }"
+)
+@Tab(properties="nombres, apellidos, codigoEvaluado, nivelAcademico, institucion.nombre, correo, telefono")
 public class Evaluado extends Usuario {
 
     @Column(length=30)

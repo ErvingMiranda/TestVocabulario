@@ -16,16 +16,17 @@ import lombok.*;
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="codigo"))
 @Getter @Setter
 @View(members =
-    "ConfiguracionGeneral { codigo; nombre; descripcion; estadoPrueba; psicologo; tiempoLimiteMinutos; permiteNoSe; fechaCreacion };" +
-    "Preguntas { preguntas };" +
-    "Baremacion { rangosBaremacion }"
+    "Identificacion { nombre; codigo; descripcion };" +
+    "ConfiguracionAplicacion { estadoPrueba; tiempoLimiteMinutos, permiteNoSe; psicologo; fechaCreacion };" +
+    "BancoPreguntas { preguntas };" +
+    "TablaBaremacion { rangosBaremacion }"
 )
-@Tab(properties="codigo, nombre, estadoPrueba, psicologo.nombres, psicologo.apellidos, tiempoLimiteMinutos, permiteNoSe, fechaCreacion")
+@Tab(properties="nombre, codigo, estadoPrueba, tiempoLimiteMinutos, permiteNoSe, psicologo.nombres, psicologo.apellidos, fechaCreacion")
 public class PruebaVocabulario extends Identifiable {
 
     @OneToMany(mappedBy="prueba", cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderBy("numero")
-    @ListProperties("numero, enunciado, puntaje, ejemplo, puntuable, activa")
+    @ListProperties("numero, enunciado, puntaje, activa, ejemplo, puntuable")
     Collection<PreguntaVocabulario> preguntas;
 
     @OneToMany(mappedBy="prueba", cascade=CascadeType.ALL, orphanRemoval=true)
@@ -58,6 +59,7 @@ public class PruebaVocabulario extends Identifiable {
     @Required
     boolean permiteNoSe = true;
 
+    @ReadOnly
     LocalDate fechaCreacion = LocalDate.now();
 
     public boolean activa() {

@@ -189,6 +189,11 @@ public class CalculoResultadoService implements ICalculoResultadoService {
             return buscarRangoMaximoConfigurado(prueba);
         }
 
+        Integer puntajeMinimoConfigurado = buscarPuntajeMinimoConfigurado(prueba);
+        if (puntajeMinimoConfigurado != null && puntajeDirecto < puntajeMinimoConfigurado) {
+            return buscarRangoMinimoConfigurado(prueba);
+        }
+
         throw new CalculoResultadoException(
             "No existe un rango de baremacion para el puntaje directo " + puntajeDirecto);
     }
@@ -220,10 +225,29 @@ public class CalculoResultadoService implements ICalculoResultadoService {
             .getSingleResult();
     }
 
+    Integer buscarPuntajeMinimoConfigurado(PruebaVocabulario prueba) {
+        return XPersistence.getManager()
+            .createQuery(
+                "select min(r.puntajeMinimo) from RangoBaremacion r where r.prueba = :prueba",
+                Integer.class)
+            .setParameter("prueba", prueba)
+            .getSingleResult();
+    }
+
     RangoBaremacion buscarRangoMaximoConfigurado(PruebaVocabulario prueba) {
         return XPersistence.getManager()
             .createQuery(
                 "from RangoBaremacion r where r.prueba = :prueba order by r.puntajeMaximo desc",
+                RangoBaremacion.class)
+            .setParameter("prueba", prueba)
+            .setMaxResults(1)
+            .getSingleResult();
+    }
+
+    RangoBaremacion buscarRangoMinimoConfigurado(PruebaVocabulario prueba) {
+        return XPersistence.getManager()
+            .createQuery(
+                "from RangoBaremacion r where r.prueba = :prueba order by r.puntajeMinimo asc",
                 RangoBaremacion.class)
             .setParameter("prueba", prueba)
             .setMaxResults(1)

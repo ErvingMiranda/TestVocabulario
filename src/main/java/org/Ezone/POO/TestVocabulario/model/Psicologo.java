@@ -8,8 +8,11 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
-@View(members = "nombres, apellidos; correo, telefono; fechaNacimiento; numeroLicencia, especialidad; activo")
-@Tab(properties="nombres, apellidos, correo, numeroLicencia, especialidad, activo")
+@View(members =
+    "DatosProfesionales { nombres, apellidos; numeroLicencia, especialidad; activo };" +
+    "Contacto { correo, telefono; fechaNacimiento }"
+)
+@Tab(properties="apellidos, nombres, numeroLicencia, especialidad, correo, activo")
 public class Psicologo extends Usuario {
 
     @Column(length=30)

@@ -14,10 +14,11 @@ import lombok.*;
 @Table(uniqueConstraints=@UniqueConstraint(columnNames={"prueba_id", "numero"}))
 @Getter @Setter
 @View(members =
-    "DatosDeLaPregunta { prueba; numero; ejemplo, puntuable, activa; enunciado; puntaje };" +
+    "Contexto { prueba; numero, puntaje; activa, ejemplo, puntuable };" +
+    "Contenido { enunciado };" +
     "Opciones { opciones }"
 )
-@Tab(properties="prueba.nombre, numero, enunciado, ejemplo, puntuable, activa")
+@Tab(properties="numero, prueba.nombre, enunciado, puntaje, activa, ejemplo, puntuable")
 public class PreguntaVocabulario extends Identifiable {
 
     @OneToMany(mappedBy="pregunta", cascade=CascadeType.ALL, orphanRemoval=true)

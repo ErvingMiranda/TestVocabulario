@@ -15,10 +15,11 @@ import lombok.*;
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="codigoAplicacion"))
 @Getter @Setter
 @View(members =
-        "DatosDelIntento { codigoAplicacion; prueba; evaluado; estadoIntento; fechaInicio, fechaFin; numeroRespuestas };" +
-        "Respuestas { respuestas }"
+        "EvaluadoYPrueba { evaluado; prueba; codigoAplicacion };" +
+        "Seguimiento { estadoIntento; numeroRespuestas; fechaInicio, fechaFin; fechaCreacion };" +
+        "RespuestasRegistradas { respuestas }"
 )
-@Tab(properties="codigoAplicacion, evaluado.nombres, evaluado.apellidos, prueba.nombre, estadoIntento, fechaInicio, fechaFin, numeroRespuestas")
+@Tab(properties="evaluado.nombres, evaluado.apellidos, prueba.nombre, estadoIntento, codigoAplicacion, fechaInicio, fechaFin, numeroRespuestas")
 public class IntentoPrueba extends Identifiable {
 
     @OneToMany(mappedBy="intento", cascade=CascadeType.ALL)

@@ -14,8 +14,8 @@ import lombok.*;
 @Table(uniqueConstraints=@UniqueConstraint(columnNames="intento_id"))
 @Getter @Setter
 @View(members =
-        "Intento { intento; fechaCalculo; tiempoDuracionMinutos };" +
-        "Calificacion { puntajeDirecto, notaFinal; cantidadCorrectas, cantidadIncorrectas; cantidadNoSe, cantidadOmitidas };" +
+        "DatosResultado { intento; fechaCalculo; tiempoDuracionMinutos };" +
+        "Calificacion { puntajeDirecto, notaFinal; cantidadCorrectas, cantidadIncorrectas; cantidadOmitidas, cantidadNoSe };" +
         "Interpretacion { interpretacion }"
 )
 @Tab(properties="intento.codigoAplicacion, intento.evaluado.nombres, intento.evaluado.apellidos, fechaCalculo, puntajeDirecto, notaFinal, cantidadCorrectas, cantidadIncorrectas, cantidadNoSe, cantidadOmitidas, interpretacion")
@@ -39,24 +39,32 @@ public class ResultadoPrueba extends Identifiable {
     @Hidden
     int respuestasOmitidas;
 
+    @ReadOnly
     int puntajeDirecto;
 
+    @ReadOnly
     BigDecimal notaFinal;
 
+    @ReadOnly
     int cantidadCorrectas;
 
+    @ReadOnly
     int cantidadIncorrectas;
 
+    @ReadOnly
     int cantidadNoSe;
 
+    @ReadOnly
     int cantidadOmitidas;
 
     @Hidden
     BigDecimal porcentaje;
 
     @Stereotype("MEMO")
+    @ReadOnly
     String interpretacion;
 
+    @ReadOnly
     LocalDateTime fechaCalculo = LocalDateTime.now();
 
     @Depends("intento.fechaInicio, intento.fechaFin")
