@@ -59,42 +59,81 @@ La versión del JDK debe coincidir con la propiedad target o release configurada
 
 Arquitectura del proyecto
 El proyecto está organizado en paquetes según la responsabilidad de cada componente.
+
 src/main/java/vocabulario/
+
 │
+
 ├── enums/
+
 │   ├── EstadoAcceso.java
+
 │   ├── EstadoIntento.java
+
 │   ├── EstadoPrueba.java
+
 │   ├── LetraOpcion.java
+
 │   ├── NivelAcademico.java
+
 │   └── TipoInstitucion.java
+
 │
+
 ├── exception/
+
 │   ├── AplicacionPruebaException.java
+
 │   ├── CalculoResultadoException.java
+
 │   └── ValidacionPruebaException.java
+
 │
+
 ├── model/
+
 │   ├── AccesoSistema.java
+
 │   ├── Usuario.java
+
 │   ├── Psicologo.java
+
 │   ├── Evaluado.java
+
 │   ├── Institucion.java
+
 │   ├── PruebaVocabulario.java
+
 │   ├── PreguntaVocabulario.java
+
 │   ├── OpcionRespuesta.java
+
 │   ├── IntentoPrueba.java
+
 │   ├── RespuestaEvaluado.java
+
 │   └── ResultadoPrueba.java
+
 │
+
 ├── service/
+
 │   ├── IAplicacionPruebaService.java
+
 │   ├── ICalculoResultadoService.java
+
 │   ├── IValidacionPruebaService.java
+
 │   ├── AplicacionPruebaService.java
+
 │   ├── CalculoResultadoService.java
+
 │   └── ValidacionPruebaService.java
+
 │
+
 └── run/
-    ├── DBManager.java
-    └── TestVocabulario.java
+
+├── DBManager.java
+    
+└── TestVocabulario.java
