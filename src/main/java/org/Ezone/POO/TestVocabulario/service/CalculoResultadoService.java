@@ -1,6 +1,5 @@
 package org.Ezone.POO.TestVocabulario.service;
 
-import java.math.*;
 import java.time.*;
 import java.util.*;
 
@@ -62,6 +61,7 @@ public class CalculoResultadoService implements ICalculoResultadoService {
         return XPersistence.getManager()
             .createQuery("from ResultadoPrueba r where r.intento = :intento", ResultadoPrueba.class)
             .setParameter("intento", intento)
+            .setMaxResults(1)
             .getResultList()
             .stream()
             .findFirst()

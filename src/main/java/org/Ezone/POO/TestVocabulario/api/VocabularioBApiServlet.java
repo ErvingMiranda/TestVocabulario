@@ -504,10 +504,17 @@ public class VocabularioBApiServlet extends HttpServlet {
     }
 
     void addCorsHeaders(HttpServletResponse response) {
-        String allowedOrigin = "*"; // Desarrollo local. En despliegue, reemplazar por el origen real del frontend.
-        response.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+        response.setHeader("Access-Control-Allow-Origin", allowedCorsOrigin());
         response.setHeader("Access-Control-Allow-Headers", "Content-Type");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    }
+
+    String allowedCorsOrigin() {
+        String value = System.getProperty("testvocabulario.cors.allowedOrigin");
+        if (value == null || value.isBlank()) {
+            value = System.getenv("TESTVOCABULARIO_CORS_ALLOWED_ORIGIN");
+        }
+        return value == null || value.isBlank() ? "*" : value;
     }
 
     void sendJson(HttpServletResponse response, int status, JsonNode body) throws IOException {

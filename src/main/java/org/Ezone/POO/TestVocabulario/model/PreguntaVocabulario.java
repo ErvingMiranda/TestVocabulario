@@ -11,6 +11,7 @@ import org.openxava.model.*;
 import lombok.*;
 
 @Entity
+@Table(uniqueConstraints=@UniqueConstraint(columnNames={"prueba_id", "numero"}))
 @Getter @Setter
 @View(members =
     "DatosDeLaPregunta { prueba; numero; ejemplo, puntuable, activa; enunciado; puntaje };" +
@@ -25,6 +26,7 @@ public class PreguntaVocabulario extends Identifiable {
     Collection<OpcionRespuesta> opciones;
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
+    @JoinColumn(name="prueba_id", nullable=false)
     @DescriptionsList(descriptionProperties="nombre")
     @Required
     PruebaVocabulario prueba;

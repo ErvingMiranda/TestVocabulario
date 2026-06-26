@@ -11,6 +11,7 @@ import org.openxava.model.*;
 import lombok.*;
 
 @Entity
+@Table(uniqueConstraints=@UniqueConstraint(columnNames="intento_id"))
 @Getter @Setter
 @View(members =
         "Intento { intento; fechaCalculo; tiempoDuracionMinutos };" +
@@ -21,6 +22,7 @@ import lombok.*;
 public class ResultadoPrueba extends Identifiable {
 
     @OneToOne(fetch=FetchType.LAZY, optional=false)
+    @JoinColumn(name="intento_id", nullable=false)
     @DescriptionsList(descriptionProperties="codigoAplicacion")
     @Required
     IntentoPrueba intento;

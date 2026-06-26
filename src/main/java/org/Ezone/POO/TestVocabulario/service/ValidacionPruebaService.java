@@ -73,8 +73,6 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
                 throw new ValidacionPruebaException(
                     "No puede haber preguntas activas con el mismo numero");
             }
-            if (!puntua(pregunta)) continue;
-
             validarOpciones(opciones(pregunta));
         }
     }
@@ -89,10 +87,6 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
         if (pregunta.getEnunciado() == null || pregunta.getEnunciado().isBlank()) {
             throw new ValidacionPruebaException("El enunciado de pregunta es requerido");
         }
-    }
-
-    boolean puntua(PreguntaVocabulario pregunta) {
-        return pregunta.isActiva() && !pregunta.isEjemplo() && pregunta.isPuntuable();
     }
 
     List<PreguntaVocabulario> preguntas(PruebaVocabulario prueba) {
@@ -112,7 +106,7 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
     void validarOpciones(List<OpcionRespuesta> opciones) {
         if (opciones.size() < 2) {
             throw new ValidacionPruebaException(
-                "Cada pregunta puntuable debe tener al menos dos opciones");
+                "Cada pregunta activa debe tener al menos dos opciones");
         }
 
         int totalCorrectas = 0;
@@ -133,7 +127,7 @@ public class ValidacionPruebaService implements IValidacionPruebaService {
 
         if (totalCorrectas != 1) {
             throw new ValidacionPruebaException(
-                "Cada pregunta puntuable debe tener exactamente una opcion correcta");
+                "Cada pregunta activa debe tener exactamente una opcion correcta");
         }
     }
 
