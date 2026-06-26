@@ -26,14 +26,14 @@ public class RangoBaremacion extends Identifiable {
     @Required
     PruebaVocabulario prueba;
 
-    @Min(0) @Required
+    @Min(value=0, message="El puntaje mínimo no puede ser negativo") @Required
     int puntajeMinimo;
 
-    @Min(0) @Required
+    @Min(value=0, message="El puntaje máximo no puede ser negativo") @Required
     int puntajeMaximo;
 
     @Column(precision=6, scale=2, nullable=false)
-    @DecimalMin("0.00") @Required
+    @DecimalMin(value="0.00", message="La nota calculada no puede ser negativa") @Required
     BigDecimal notaCalculada;
 
     @Stereotype("MEMO")

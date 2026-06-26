@@ -50,7 +50,14 @@
         retry: document.getElementById("retry")
     };
 
+    var VALIDACION = {
+        letrasEspacios: /^[A-Za-zÁÉÍÓÚÜáéíóúüÑñ]+(?: [A-Za-zÁÉÍÓÚÜáéíóúüÑñ]+)*$/,
+        correo: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+        telefono: /^\d{7,15}$/
+    };
+
     document.addEventListener("DOMContentLoaded", iniciarAplicacion);
+    document.addEventListener("DOMContentLoaded", configurarValidacionEvaluado);
     elements.form.addEventListener("submit", iniciarIntento);
     elements.beginTest.addEventListener("click", mostrarPrueba);
     elements.previousQuestion.addEventListener("click", preguntaAnterior);
@@ -106,7 +113,7 @@
     async function iniciarIntento(event) {
         event.preventDefault();
 
-        if (!elements.form.reportValidity()) {
+        if (!validarFormularioEvaluado(true)) {
             return;
         }
         if (!state.prueba || !state.prueba.idPrueba) {
@@ -162,6 +169,120 @@
         agregarSiTieneValor(datos, "telefono", valor("telefono"));
 
         return datos;
+    }
+
+    function configurarValidacionEvaluado() {
+        Array.prototype.forEach.call(elements.form.elements, function (campo) {
+            if (!campo.name || campo.type === "submit" || campo.type === "button") return;
+            campo.addEventListener("input", function () {
+                campo.dataset.tocado = "true";
+                validarCampoEvaluado(campo, true);
+                actualizarEstadoBotonInicio();
+            });
+            campo.addEventListener("change", function () {
+                campo.dataset.tocado = "true";
+                validarCampoEvaluado(campo, true);
+                actualizarEstadoBotonInicio();
+            });
+            campo.addEventListener("blur", function () {
+                campo.dataset.tocado = "true";
+                validarCampoEvaluado(campo, true);
+                actualizarEstadoBotonInicio();
+            });
+        });
+        actualizarEstadoBotonInicio();
+    }
+
+    function validarFormularioEvaluado(mostrarErrores) {
+        var valido = true;
+        Array.prototype.forEach.call(elements.form.elements, function (campo) {
+            if (!campo.name || campo.type === "submit" || campo.type === "button") return;
+            if (mostrarErrores) campo.dataset.tocado = "true";
+            valido = validarCampoEvaluado(campo, mostrarErrores || campo.dataset.tocado === "true") && valido;
+        });
+        actualizarEstadoBotonInicio();
+        if (!valido) enfocarPrimerCampoInvalido();
+        return valido;
+    }
+
+    function validarCampoEvaluado(campo, mostrarError) {
+        var mensaje = mensajeValidacionEvaluado(campo);
+        campo.setCustomValidity(mensaje);
+
+        if (mostrarError) {
+            mostrarErrorCampo(campo, mensaje);
+        }
+        return !mensaje;
+    }
+
+    function mensajeValidacionEvaluado(campo) {
+        var valorCampo = campo.value.trim();
+        if (campo.required && !valorCampo) {
+            return "Este campo es obligatorio";
+        }
+        if (!valorCampo) return "";
+
+        if ((campo.name === "nombres" || campo.name === "apellidos") &&
+            !VALIDACION.letrasEspacios.test(valorCampo)) {
+
+            return campo.name === "nombres" ?
+                "El nombre solo puede contener letras y espacios" :
+                "El apellido solo puede contener letras y espacios";
+        }
+        if (campo.name === "correo" && !VALIDACION.correo.test(valorCampo)) {
+            return "El correo debe tener un formato válido";
+        }
+        if (campo.name === "telefono" && !VALIDACION.telefono.test(valorCampo)) {
+            return "El teléfono solo puede contener números y debe tener entre 7 y 15 dígitos";
+        }
+        if (campo.name === "fechaNacimiento" && fechaEsFutura(valorCampo)) {
+            return "La fecha de nacimiento no puede ser futura";
+        }
+        return "";
+    }
+
+    function mostrarErrorCampo(campo, mensaje) {
+        var error = errorCampo(campo);
+        campo.classList.toggle("is-invalid", Boolean(mensaje));
+        campo.setAttribute("aria-invalid", mensaje ? "true" : "false");
+        error.textContent = mensaje;
+        error.hidden = !mensaje;
+    }
+
+    function errorCampo(campo) {
+        var id = campo.id + "-error";
+        var existente = document.getElementById(id);
+        if (existente) return existente;
+
+        var error = document.createElement("span");
+        error.id = id;
+        error.className = "field-error";
+        error.hidden = true;
+        campo.insertAdjacentElement("afterend", error);
+        campo.setAttribute("aria-describedby", id);
+        return error;
+    }
+
+    function actualizarEstadoBotonInicio() {
+        var boton = elements.form.querySelector("button[type='submit']");
+        if (!boton) return;
+
+        var hayErroresVisibles = elements.form.querySelector(".is-invalid");
+        boton.disabled = Boolean(hayErroresVisibles);
+    }
+
+    function enfocarPrimerCampoInvalido() {
+        var invalido = elements.form.querySelector(".is-invalid");
+        if (invalido) invalido.focus();
+    }
+
+    function fechaEsFutura(valorCampo) {
+        var fecha = new Date(valorCampo + "T00:00:00");
+        if (Number.isNaN(fecha.getTime())) return false;
+
+        var hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        return fecha > hoy;
     }
 
     function renderizarInstrucciones() {

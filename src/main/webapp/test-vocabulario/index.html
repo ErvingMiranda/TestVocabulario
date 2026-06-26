@@ -30,15 +30,15 @@
                 <div class="grid">
                     <label>
                         Nombres
-                        <input id="nombres" name="nombres" type="text" autocomplete="given-name" required>
+                        <input id="nombres" name="nombres" type="text" autocomplete="given-name" maxlength="80" required>
                     </label>
                     <label>
                         Apellidos
-                        <input id="apellidos" name="apellidos" type="text" autocomplete="family-name" required>
+                        <input id="apellidos" name="apellidos" type="text" autocomplete="family-name" maxlength="80" required>
                     </label>
                     <label>
                         Correo
-                        <input id="correo" name="correo" type="email" autocomplete="email" required>
+                        <input id="correo" name="correo" type="email" autocomplete="email" maxlength="120" required>
                     </label>
                     <label>
                         Nivel académico
@@ -58,7 +58,7 @@
                     </label>
                     <label>
                         Teléfono <span class="optional">(opcional)</span>
-                        <input id="telefono" name="telefono" type="tel" autocomplete="tel">
+                        <input id="telefono" name="telefono" type="tel" autocomplete="tel" inputmode="numeric" maxlength="15" pattern="[0-9]{7,15}">
                     </label>
                 </div>
 

@@ -18,6 +18,7 @@
 	<module name="RegistroPsicologo" folder="Psic&#243;logos">
 		<model name="Psicologo"/>
 		<controller name="RegistroPsicologoController"/>
+		<mode-controller name="DetailOnly"/>
 	</module>
 
 	<module name="Evaluado" folder="Evaluados">

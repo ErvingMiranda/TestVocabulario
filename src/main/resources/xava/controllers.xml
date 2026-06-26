@@ -57,12 +57,16 @@ https://github.com/openxava/openxava/blob/master/openxavatest/src/main/resources
                 class="org.openxava.actions.NewAction">
             <set property="restoreModel" value="true"/>
         </action>
+
         <action name="saveNew"
                 by-default="almost-always"
+                mode="detail"
                 class="org.Ezone.POO.TestVocabulario.actions.GuardarRegistroPsicologoAction"
                 label="Guardar psicólogo">
         </action>
+
         <action name="cancel"
+                mode="detail"
                 class="org.openxava.actions.CancelAction">
         </action>
     </controller>

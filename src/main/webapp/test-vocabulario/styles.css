@@ -130,6 +130,23 @@ button:focus-visible {
     outline-offset: 2px;
 }
 
+input.is-invalid,
+select.is-invalid {
+    border-color: var(--danger);
+    background: #fff1f2;
+}
+
+input.is-invalid:focus,
+select.is-invalid:focus {
+    outline-color: rgba(185, 28, 28, 0.24);
+}
+
+.field-error {
+    color: var(--danger);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
 .actions,
 .navigation {
     display: flex;

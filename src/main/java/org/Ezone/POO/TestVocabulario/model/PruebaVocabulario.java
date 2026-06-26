@@ -35,9 +35,14 @@ public class PruebaVocabulario extends Identifiable {
     Collection<RangoBaremacion> rangosBaremacion;
 
     @Column(length=30, nullable=false) @Required
+    @NotBlank(message="El código de la prueba es requerido")
+    @Size(max=30, message="El código de la prueba no puede exceder 30 caracteres")
+    @Pattern(regexp="^[A-Za-z0-9._-]+$", message="El código de la prueba solo puede contener letras, números, punto, guion y guion bajo")
     String codigo;
 
     @Column(length=100, nullable=false) @Required
+    @NotBlank(message="El nombre de la prueba es requerido")
+    @Size(max=100, message="El nombre de la prueba no puede exceder 100 caracteres")
     String nombre;
 
     @Stereotype("MEMO")
@@ -53,7 +58,7 @@ public class PruebaVocabulario extends Identifiable {
     @Required
     Psicologo psicologo;
 
-    @Min(1) @Required
+    @Min(value=1, message="El tiempo límite debe ser mayor que cero") @Required
     int tiempoLimiteMinutos = 6;
 
     @Required

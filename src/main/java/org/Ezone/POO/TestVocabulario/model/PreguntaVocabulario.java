@@ -6,6 +6,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 
 import org.openxava.annotations.*;
+import org.openxava.jpa.*;
 import org.openxava.model.*;
 
 import lombok.*;
@@ -32,14 +33,15 @@ public class PreguntaVocabulario extends Identifiable {
     @Required
     PruebaVocabulario prueba;
 
-    @Min(1) @Required
+    @Min(value=1, message="El número de pregunta debe ser mayor que cero") @Required
     int numero;
 
     @Stereotype("MEMO")
     @Required
+    @NotBlank(message="El enunciado de la pregunta es requerido")
     String enunciado;
 
-    @Min(1) @Required
+    @Min(value=1, message="El puntaje de pregunta debe ser mayor que cero") @Required
     int puntaje = 1;
 
     @Required
@@ -50,4 +52,40 @@ public class PreguntaVocabulario extends Identifiable {
 
     @Required
     boolean activa = true;
+
+    @Hidden
+    @AssertTrue(message="No puede haber preguntas con el mismo número en una prueba")
+    public boolean isNumeroUnicoEnPrueba() {
+        if (prueba == null || numero <= 0) return true;
+
+        Long total = XPersistence.getManager()
+            .createQuery(
+                "select count(p) from PreguntaVocabulario p " +
+                    "where p.prueba = :prueba and p.numero = :numero " +
+                    "and (:id is null or p.id <> :id)",
+                Long.class)
+            .setParameter("prueba", prueba)
+            .setParameter("numero", numero)
+            .setParameter("id", getId())
+            .getSingleResult();
+        return total == 0;
+    }
+
+    @Hidden
+    @AssertTrue(message="No puede haber preguntas con el mismo enunciado en una prueba")
+    public boolean isEnunciadoUnicoEnPrueba() {
+        if (prueba == null || enunciado == null || enunciado.isBlank()) return true;
+
+        Long total = XPersistence.getManager()
+            .createQuery(
+                "select count(p) from PreguntaVocabulario p " +
+                    "where p.prueba = :prueba and lower(trim(p.enunciado)) = :enunciado " +
+                    "and (:id is null or p.id <> :id)",
+                Long.class)
+            .setParameter("prueba", prueba)
+            .setParameter("enunciado", enunciado.trim().toLowerCase(Locale.ROOT))
+            .setParameter("id", getId())
+            .getSingleResult();
+        return total == 0;
+    }
 }

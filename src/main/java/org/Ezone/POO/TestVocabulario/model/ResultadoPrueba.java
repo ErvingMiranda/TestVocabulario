@@ -4,6 +4,7 @@ import java.math.*;
 import java.time.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 
 import org.openxava.annotations.*;
 import org.openxava.model.*;
@@ -28,36 +29,47 @@ public class ResultadoPrueba extends Identifiable {
     IntentoPrueba intento;
 
     @Hidden
+    @Min(value=0, message="El total de preguntas no puede ser negativo")
     int totalPreguntas;
 
     @Hidden
+    @Min(value=0, message="Las respuestas correctas no pueden ser negativas")
     int respuestasCorrectas;
 
     @Hidden
+    @Min(value=0, message="Las respuestas incorrectas no pueden ser negativas")
     int respuestasIncorrectas;
 
     @Hidden
+    @Min(value=0, message="Las respuestas omitidas no pueden ser negativas")
     int respuestasOmitidas;
 
     @ReadOnly
+    @Min(value=0, message="El puntaje directo no puede ser negativo")
     int puntajeDirecto;
 
     @ReadOnly
+    @DecimalMin(value="0.00", message="La nota final no puede ser negativa")
     BigDecimal notaFinal;
 
     @ReadOnly
+    @Min(value=0, message="La cantidad de correctas no puede ser negativa")
     int cantidadCorrectas;
 
     @ReadOnly
+    @Min(value=0, message="La cantidad de incorrectas no puede ser negativa")
     int cantidadIncorrectas;
 
     @ReadOnly
+    @Min(value=0, message="La cantidad de NO_SE no puede ser negativa")
     int cantidadNoSe;
 
     @ReadOnly
+    @Min(value=0, message="La cantidad de omitidas no puede ser negativa")
     int cantidadOmitidas;
 
     @Hidden
+    @DecimalMin(value="0.00", message="El porcentaje no puede ser negativo")
     BigDecimal porcentaje;
 
     @Stereotype("MEMO")

@@ -264,15 +264,31 @@ public class VocabularioBApiServlet extends HttpServlet {
 
     Evaluado crearEvaluado(JsonNode node) {
         Evaluado evaluado = new Evaluado();
-        evaluado.setNombres(requiredText(node, "nombres"));
-        evaluado.setApellidos(requiredText(node, "apellidos"));
-        evaluado.setCorreo(optionalText(node, "correo", "correoElectronico"));
-        evaluado.setTelefono(optionalText(node, "telefono"));
-        evaluado.setCodigoEvaluado(optionalText(node, "codigoEvaluado"));
+        String nombres = requiredText(node, "nombres");
+        String apellidos = requiredText(node, "apellidos");
+        String correo = optionalText(node, "correo", "correoElectronico");
+        String telefono = optionalText(node, "telefono");
+        String codigoEvaluado = optionalText(node, "codigoEvaluado");
+
+        ValidacionDatosService.validarNombres(nombres);
+        ValidacionDatosService.validarApellidos(apellidos);
+        ValidacionDatosService.validarCorreoOpcional(correo);
+        ValidacionDatosService.validarTelefonoOpcional(telefono);
+        ValidacionDatosService.validarCodigoOpcional(
+            codigoEvaluado,
+            "El código de evaluado solo puede contener letras, números, punto, guion y guion bajo");
+
+        evaluado.setNombres(nombres);
+        evaluado.setApellidos(apellidos);
+        evaluado.setCorreo(correo);
+        evaluado.setTelefono(telefono);
+        evaluado.setCodigoEvaluado(codigoEvaluado);
 
         String fechaNacimiento = optionalText(node, "fechaNacimiento");
         if (fechaNacimiento != null) {
-            evaluado.setFechaNacimiento(LocalDate.parse(fechaNacimiento, DATE_FORMAT));
+            LocalDate fecha = LocalDate.parse(fechaNacimiento, DATE_FORMAT);
+            ValidacionDatosService.validarFechaNacimiento(fecha);
+            evaluado.setFechaNacimiento(fecha);
         }
 
         String nivelAcademico = optionalText(node, "nivelAcademico");
@@ -632,7 +648,7 @@ public class VocabularioBApiServlet extends HttpServlet {
         for (String name : names) {
             JsonNode value = node.path(name);
             if (!value.isMissingNode() && !value.isNull() && !value.asText().isBlank()) {
-                return value.asText();
+                return value.asText().trim();
             }
         }
         return null;
@@ -642,7 +658,7 @@ public class VocabularioBApiServlet extends HttpServlet {
         for (String name : names) {
             String value = request.getParameter(name);
             if (value != null && !value.isBlank()) {
-                return value;
+                return value.trim();
             }
         }
         return null;

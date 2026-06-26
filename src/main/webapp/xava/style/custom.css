@@ -1,3 +1,20 @@
 /*
 Put here your own style
 */
+
+.tv-invalid {
+    border-color: #b91c1c !important;
+    background-color: #fff1f2 !important;
+}
+
+.tv-invalid:focus {
+    outline: 3px solid rgba(185, 28, 28, 0.24) !important;
+    outline-offset: 2px;
+}
+
+.tv-field-error {
+    margin-top: 0.25rem;
+    color: #b91c1c;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
